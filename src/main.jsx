@@ -246,14 +246,22 @@ function Header({
                 <b>India</b>
               </span>
             </div>
-            <button className="head-count" onClick={onWishlist}>
+            <button
+              className="head-count"
+              onClick={onWishlist}
+              aria-label="Open wishlist"
+            >
               <span className="action-icon">
                 <Heart size={18} />
               </span>
               <span className="action-label">Wishlist</span>
               {wishCount > 0 && <em>{wishCount}</em>}
             </button>
-            <button className="head-count cart-head" onClick={onCart}>
+            <button
+              className="head-count cart-head"
+              onClick={onCart}
+              aria-label="Open cart"
+            >
               <span className="action-icon">
                 <ShoppingCart size={18} />
               </span>
