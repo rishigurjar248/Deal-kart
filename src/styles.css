@@ -675,9 +675,6 @@ header {
   transform: scale(1.065);
   filter: saturate(1.05);
 }
-.card:hover .content small {
-  visibility: hidden;
-}
 .badge {
   position: absolute;
   top: 12px;
@@ -862,6 +859,9 @@ header {
 .rating span {
   color: #666;
 }
+.site:not(.light-theme) .rating span {
+  color: #d5d5d5;
+}
 .content small {
   color: #777;
   font-size: 9px;
@@ -891,6 +891,9 @@ header {
 .price b {
   font-family: "Space Grotesk", sans-serif;
   font-size: 17px;
+}
+.site:not(.light-theme) .price b {
+  color: #fff3a6;
 }
 .buy {
   width: 100%;

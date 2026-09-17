@@ -1348,7 +1348,7 @@ function App() {
     try {
       return localStorage.getItem("dealkart-theme") || "light";
     } catch {
-      return "dark";
+      return "light";
     }
   });
   useEffect(() => {
