@@ -166,7 +166,11 @@ function waUrl(items, customer = {}, promo = {}) {
   const couponLine = promo.code
     ? `\nCoupon: ${promo.code} (${money(discountAmount)} OFF)`
     : "";
-  const m = `Hi DealKart 👋\n\nI want to place an order:\n${lines}${couponLine}\n\nSubtotal: ${money(subtotal)}\nDiscount: ${money(discountAmount)}\nTotal: ${money(total)}\n\nCustomer details:\nName: ${customer.name || ""}\nPhone: ${customer.phone || ""}\nFull delivery address: ${customer.address || ""}\nPincode: ${customer.pincode || ""}`;
+  const additionalInfo = customer.additionalInfo?.trim();
+  const additionalInfoLine = additionalInfo
+    ? `\nAdditional information: ${additionalInfo}`
+    : "";
+  const m = `Hi DealKart 👋\n\nI want to place an order:\n${lines}${couponLine}\n\nSubtotal: ${money(subtotal)}\nDiscount: ${money(discountAmount)}\nTotal: ${money(total)}\n\nCustomer details:\nName: ${customer.name || ""}\nPhone: ${customer.phone || ""}\nFull delivery address: ${customer.address || ""}\nPincode: ${customer.pincode || ""}${additionalInfoLine}`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(m)}`;
 }
 function Logo() {
@@ -1157,14 +1161,26 @@ function Checkout({
   items,
   couponInfo = { code: "", discount: 0 },
 }) {
-  const [f, setF] = useState({ name: "", phone: "", address: "", pincode: "" });
+  const [f, setF] = useState({
+    name: "",
+    phone: "",
+    address: "",
+    pincode: "",
+    additionalInfo: "",
+  });
   useEffect(() => {
     if (open) {
       try {
         const saved = JSON.parse(
           localStorage.getItem("dealkart-checkout") || "null",
         );
-        if (saved) setF(saved);
+        if (saved) {
+          setF((current) => ({
+            ...current,
+            ...saved,
+            additionalInfo: saved.additionalInfo || "",
+          }));
+        }
       } catch {}
     }
   }, [open]);
@@ -1232,6 +1248,15 @@ function Checkout({
               value={f.address}
               onChange={(e) => setF({ ...f, address: e.target.value })}
               placeholder="House / flat, street, area, city, state"
+            />
+          </label>
+          <label>
+            Additional Information (Optional)
+            <textarea
+              rows="3"
+              value={f.additionalInfo}
+              onChange={(e) => setF({ ...f, additionalInfo: e.target.value })}
+              placeholder="Have any special instructions or questions? Let us know..."
             />
           </label>
         </div>
