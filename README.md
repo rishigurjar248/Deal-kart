@@ -1,4 +1,4 @@
-# DealKart Combined Storefront
+# DealKart latest Storefront
 
 This version combines the **POP-inspired visual direction** with the **222 DealKart functionality**.
 
