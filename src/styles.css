@@ -1167,8 +1167,13 @@ footer {
   margin-bottom: 10px;
 }
 .footer-tagline {
-  color: #ddd !important;
+  color: var(--accent) !important;
   font-weight: 700;
+}
+.site:not(.light-theme) .footer-inner p,
+.site:not(.light-theme) .footer-inner a,
+.site:not(.light-theme) .footer-inner button {
+  color: rgba(255, 255, 255, 0.9);
 }
 .footer-inner p,
 .footer-inner a,
