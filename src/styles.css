@@ -675,6 +675,9 @@ header {
   transform: scale(1.065);
   filter: saturate(1.05);
 }
+.card:hover .content small {
+  visibility: hidden;
+}
 .badge {
   position: absolute;
   top: 12px;
@@ -803,6 +806,8 @@ header {
 }
 .hover-price b {
   font-size: 16px;
+  color: var(--accent);
+  font-weight: 900;
 }
 .hover-price del,
 .price del {
