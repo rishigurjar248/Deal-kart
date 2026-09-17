@@ -28,6 +28,7 @@ const blank = () => ({
   keyPoints: ["", "", "", ""],
   specs: ["", "", "", ""],
   isTop10: false,
+  hasReturn: true,
 });
 
 const csvEscape = (v) => `"${String(v ?? "").replaceAll('"', '""')}"`;
@@ -191,6 +192,7 @@ export default function AdminPage() {
         image: images[0] || "",
         galleryImages: images.slice(1),
         isTop10: Boolean(p.isTop10),
+        hasReturn: p.hasReturn !== false,
       };
     });
     saveCatalog(cleaned).then(() => {
@@ -201,7 +203,7 @@ export default function AdminPage() {
   };
 
   const exportCsv = () => {
-    const cols = ["id","name","brand","category","price","mrp","discount","rating","reviews","image","description","keyPoints","isTop10"];
+    const cols = ["id","name","brand","category","price","mrp","discount","rating","reviews","image","description","keyPoints","isTop10","hasReturn"];
     const csv = [cols, ...items.map(p => cols.map(c => Array.isArray(p[c]) ? p[c].join(" | ") : p[c]))]
       .map(r => r.map(csvEscape).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -254,6 +256,12 @@ export default function AdminPage() {
               <label>Rating<input type="number" min="0" max="5" step="0.1" value={p.rating ?? ""} onChange={e => update(p.id,"rating",e.target.value)} /></label>
               <label>Reviews<input value={p.reviews ?? ""} onChange={e => update(p.id,"reviews",e.target.value)} /></label>
               <label className="admin-top-toggle"><span>Today's Top 10</span><button type="button" className={p.isTop10 ? "on" : ""} onClick={() => toggleTop10(p.id)}>{p.isTop10 ? "✓ Added to Top 10" : "Add to Top 10"}</button></label>
+              <label>Return policy
+                <select value={p.hasReturn === false ? "no" : "yes"} onChange={e => update(p.id, "hasReturn", e.target.value === "yes")}>
+                  <option value="yes">Return available — 72 hours</option>
+                  <option value="no">No return</option>
+                </select>
+              </label>
               <label className="admin-wide">Description<textarea value={p.description || ""} onChange={e => update(p.id,"description",e.target.value)} /></label>
               <div className="admin-wide"><div className="admin-field-title">4 Key points</div><div className="admin-points">{[0,1,2,3].map(i => <input key={i} placeholder={`Key point ${i+1}`} value={(p.keyPoints || p.specs || [])[i] || ""} onChange={e => updatePoint(p.id,i,e.target.value)} />)}</div></div>
               <div className="admin-wide"><div className="admin-field-title">Product images</div><ImageManager product={p} update={update}/></div>

@@ -182,7 +182,7 @@ function Header({
           </span>
           <span className="topbar-message">100% genuine products</span>
           <i>·</i>
-          <span>7-day easy returns</span>
+          <span>72-hour easy returns</span>
           <i>·</i>
           <span>Pan India delivery</span>
           <div className="topbar-note">
@@ -351,7 +351,7 @@ function Trust() {
       <div className="trust-item">
         <RotateCcw />
         <span>
-          <b>7-Day Easy Returns</b>
+          <b>72-Hour Easy Returns</b>
           <small>Simple return support</small>
         </span>
       </div>
@@ -363,6 +363,17 @@ function Trust() {
         </span>
       </div>
     </section>
+  );
+}
+function ReturnPolicyBadge({ hasReturn }) {
+  if (hasReturn === false) {
+    return <span className="return-policy-badge no-return">No return</span>;
+  }
+  return (
+    <span className="return-policy-badge">
+      <RotateCcw size={13} /> <b>72-hour easy return</b>
+      <span>Return request within 72 hours of delivery.</span>
+    </span>
   );
 }
 function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen }) {
@@ -468,6 +479,7 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen }) {
           <b>{money(salePrice(p))}</b>
           <span>{discount(p)}% off</span>
         </div>
+        <ReturnPolicyBadge hasReturn={p.hasReturn} />
         <button
           className="buy"
           onClick={(e) => {
@@ -571,6 +583,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
           <div className="modal-stock">
             <Check size={15} /> {p.availability}
           </div>
+          <ReturnPolicyBadge hasReturn={p.hasReturn} />
           <div className="modal-buttons">
             <button onClick={() => onAdd(p)}>
               <ShoppingCart size={17} /> Add to cart
@@ -702,12 +715,12 @@ function InfoModal({ type, onClose }) {
   if (!type) return null;
   const content = {
     returns: {
-      title: "7-Day Easy Return Policy",
+      title: "72-Hour Easy Return Policy",
       kicker: "RETURNS & REFUNDS",
       body: (
         <>
           <p>
-            You can request a return within <b>7 days of delivery</b> for
+            You can request a return within <b>72 hours of delivery</b> for
             eligible products, subject to the product and brand's return
             conditions.
           </p>
@@ -1140,7 +1153,7 @@ function Footer({ setInfo, wishCount, onWishlist }) {
         </div>
         <div>
           <RotateCcw />
-          <b>7-Day Easy Returns</b>
+          <b>72-Hour Easy Returns</b>
           <span>Easy support on eligible items</span>
         </div>
         <div>
@@ -1183,7 +1196,7 @@ function Footer({ setInfo, wishCount, onWishlist }) {
             Delivery information
           </button>
           <button onClick={() => setInfo("returns")}>
-            7-day return policy
+            72-hour return policy
           </button>
           <button onClick={() => setInfo("support")}>Contact support</button>
         </div>
@@ -1206,7 +1219,7 @@ function Footer({ setInfo, wishCount, onWishlist }) {
       <div className="footer-bottom">
         <span>© 2026 DealKart. All rights reserved.</span>
         <span>
-          Prepaid orders · Pan India delivery · 7-day easy returns on eligible
+          Prepaid orders · Pan India delivery · 72-hour easy returns on eligible
           products
         </span>
       </div>
@@ -1644,7 +1657,7 @@ function App() {
                 <small>Average product rating</small>
               </span>
               <span>
-                <b>7 days</b>
+                <b>72 hours</b>
                 <small>Easy return window*</small>
               </span>
             </div>

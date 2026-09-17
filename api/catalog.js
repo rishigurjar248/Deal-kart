@@ -29,6 +29,7 @@ const mapRow = (r = {}) => ({
   specs: arrayValue(r.key_points),
   description: r.description ?? "",
   isTop10: Boolean(r.is_top10),
+  hasReturn: r.has_return !== false,
   top10Rank: r.top10_rank ?? null,
   isActive: r.is_active !== false,
 });
@@ -56,6 +57,7 @@ const mapProduct = (p = {}) => {
     key_points: keyPoints,
     description: String(p.description ?? ""),
     is_top10: Boolean(p.isTop10 ?? p.is_top10),
+    has_return: p.hasReturn !== false && p.has_return !== false,
     top10_rank: p.top10Rank ?? p.top10_rank ?? null,
     is_active: p.isActive !== false && p.is_active !== false,
     updated_at: new Date().toISOString(),
@@ -72,7 +74,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     const { data, error } = await db
       .from("products")
-      .select("id,page,name,brand,category,price,mrp,old_price,discount,rating,reviews,review_count,image,gallery_images,images,key_points,description,is_top10,top10_rank,is_active")
+      .select("id,page,name,brand,category,price,mrp,old_price,discount,rating,reviews,review_count,image,gallery_images,images,key_points,description,is_top10,has_return,top10_rank,is_active")
       .eq("is_active", true)
       .order("top10_rank", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });

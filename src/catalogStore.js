@@ -49,6 +49,7 @@ export const normalize = (p = {}, index = 0) => {
     keyPoints,
     specs: keyPoints,
     isTop10: Boolean(p.isTop10 ?? p.is_top10),
+    hasReturn: p.hasReturn ?? p.has_return ?? true,
     top10Rank: p.top10Rank ?? p.top10_rank ?? null,
     description: String(p.description ?? ""),
     isActive: p.isActive ?? p.is_active ?? true,

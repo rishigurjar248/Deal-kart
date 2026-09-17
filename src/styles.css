@@ -4703,3 +4703,65 @@ svg {
 @keyframes catalog-shimmer { to { background-position: -200% 0; } }
 @media (max-width: 700px) { .catalog-skeleton-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (prefers-reduced-motion: reduce) { .catalog-spinner, .catalog-skeleton-card { animation: none; } }
+
+
+/* Product return-policy indicator */
+.return-policy-badge {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 9px 0 11px;
+  padding: 6px 9px;
+  border: 1px solid #b9e7c7;
+  border-radius: 9px;
+  background: #f2fbf4;
+  color: #21844a;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.return-policy-badge svg {
+  flex: 0 0 auto;
+}
+.return-policy-badge b {
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.return-policy-badge > span {
+  color: #77766f;
+  font-size: 10px;
+}
+.return-policy-badge.no-return {
+  display: inline-flex;
+  padding: 4px 7px;
+  margin: 8px 0 10px;
+  border-color: #e4e1da;
+  background: #faf9f6;
+  color: #77736b;
+  font-size: 10px;
+  font-weight: 500;
+}
+.modal-info .return-policy-badge {
+  margin: 13px 0 16px;
+}
+@media (max-width: 560px) {
+  .return-policy-badge > span {
+    flex-basis: 100%;
+    margin-left: 18px;
+  }
+}
+
+
+.admin-form-grid select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-border, #dedbd4);
+  border-radius: 10px;
+  background: var(--admin-input, #fff);
+  color: inherit;
+  font: inherit;
+}

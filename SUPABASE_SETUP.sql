@@ -17,6 +17,7 @@ create table if not exists public.products (
   key_points jsonb not null default '[]'::jsonb,
   description text not null default '',
   is_top10 boolean not null default false,
+  has_return boolean not null default true,
   top10_rank integer,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -38,3 +39,8 @@ on public.products (is_active, top10_rank);
 
 create index if not exists products_category_idx
 on public.products (category);
+
+-- If the products table already existed before this return-policy feature,
+-- run this migration once in Supabase SQL Editor.
+alter table public.products
+  add column if not exists has_return boolean not null default true;
