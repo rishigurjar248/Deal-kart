@@ -4975,6 +4975,20 @@ svg {
   color: #69645c;
   border-color: #d9d3c8;
 }
+.light-theme .footer-trust b,
+.light-theme .footer-trust span,
+.light-theme .footer-inner p,
+.light-theme .footer-inner a,
+.light-theme .footer-inner button,
+.light-theme .footer-inner b,
+.light-theme .footer-bottom,
+.light-theme .footer-bottom span {
+  color: #111;
+}
+.light-theme .footer-inner a:hover,
+.light-theme .footer-inner button:hover {
+  color: #444;
+}
 .light-theme .mini-stats,
 .light-theme .recent-card {
   background: #fffdf9;
