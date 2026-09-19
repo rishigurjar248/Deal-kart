@@ -31,14 +31,14 @@ import {
 } from "lucide-react";
 import { Component, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
+import AdminPage from "./AdminPage";
 import dealkartSymbol from "./assets/dealkart-symbol.png";
 import heroGym from "./assets/hero-posters/fitness-home-gym.png";
 import heroFitness from "./assets/hero-posters/fitness-stronger.png";
 import heroFood from "./assets/hero-posters/food-clean-green.png";
 import heroStock from "./assets/hero-posters/stock-up-days.png";
 import heroWellness from "./assets/hero-posters/wellness-balance.png";
-import AdminPage from "./AdminPage";
-import { getInitialCatalog, fetchRemoteCatalog } from "./catalogStore";
+import { fetchRemoteCatalog, getInitialCatalog } from "./catalogStore";
 import "./styles.css";
 
 const WHATSAPP_NUMBER = "919244335428";
@@ -60,7 +60,9 @@ const initialProducts = getInitialCatalog();
 let products = initialProducts;
 let specialDeals = initialProducts
   .filter((p) => p.isTop10)
-  .sort((a, b) => (Number(a.top10Rank) || 999999) - (Number(b.top10Rank) || 999999))
+  .sort(
+    (a, b) => (Number(a.top10Rank) || 999999) - (Number(b.top10Rank) || 999999),
+  )
   .slice(0, 10);
 
 const heroSlides = [
@@ -73,11 +75,14 @@ const heroSlides = [
   { image: heroFood, alt: "Clean food and healthy essentials deals" },
 ];
 const money = (n) => (n ? `₹${n.toLocaleString("en-IN")}` : "");
-const productGalleryImages = import.meta.glob("./assets/product-gallery/product-*-view*.jpg", {
-  eager: true,
-  import: "default",
-  query: "?url",
-});
+const productGalleryImages = import.meta.glob(
+  "./assets/product-gallery/product-*-view*.jpg",
+  {
+    eager: true,
+    import: "default",
+    query: "?url",
+  },
+);
 
 // External photos are included only where the exact product identity was verified.
 // Every product also has two additional views generated from its original catalog
@@ -125,18 +130,29 @@ const verifiedExternalGalleries = {
 
 const getProductGallery = (p) => {
   const localViews = [2, 3]
-    .map((n) => productGalleryImages[`./assets/product-gallery/product-${String(p.page).padStart(4, "0")}-view${n}.jpg`])
+    .map(
+      (n) =>
+        productGalleryImages[
+          `./assets/product-gallery/product-${String(p.page).padStart(4, "0")}-view${n}.jpg`
+        ],
+    )
     .filter(Boolean);
   const verified = verifiedExternalGalleries[p.page] || [];
   // Admin-uploaded galleryImages must be included here too. Previously only
   // the primary image and built-in galleries were rendered, so newly added
   // product photos appeared to be lost on the storefront.
-  return [...new Set([p.image, ...(p.galleryImages || []), ...verified, ...localViews].filter(Boolean))];
+  return [
+    ...new Set(
+      [p.image, ...(p.galleryImages || []), ...verified, ...localViews].filter(
+        Boolean,
+      ),
+    ),
+  ];
 };
 const salePrice = (p) => p.price;
 const mrp = (p) => {
   if (p.oldPrice > p.price) return p.oldPrice;
-  return Math.ceil((p.price / 0.75) / 50) * 50;
+  return Math.ceil(p.price / 0.75 / 50) * 50;
 };
 const discount = (p) =>
   Math.max(0, Math.round((1 - salePrice(p) / mrp(p)) * 100));
@@ -147,7 +163,9 @@ function waUrl(items, customer = {}, promo = {}) {
   const subtotal = items.reduce((s, x) => s + x.p.price * x.qty, 0);
   const discountAmount = promo.discount || 0;
   const total = Math.max(0, subtotal - discountAmount);
-  const couponLine = promo.code ? `\nCoupon: ${promo.code} (${money(discountAmount)} OFF)` : "";
+  const couponLine = promo.code
+    ? `\nCoupon: ${promo.code} (${money(discountAmount)} OFF)`
+    : "";
   const m = `Hi DealKart 👋\n\nI want to place an order:\n${lines}${couponLine}\n\nSubtotal: ${money(subtotal)}\nDiscount: ${money(discountAmount)}\nTotal: ${money(total)}\n\nCustomer details:\nName: ${customer.name || ""}\nPhone: ${customer.phone || ""}\nFull delivery address: ${customer.address || ""}\nPincode: ${customer.pincode || ""}`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(m)}`;
 }
@@ -485,9 +503,13 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen }) {
   );
 }
 function productHasReturn(p) {
-  const value = p?.returnEligible ?? p?.return_eligible ?? p?.hasReturn ?? p?.has_return;
+  const value =
+    p?.returnEligible ?? p?.return_eligible ?? p?.hasReturn ?? p?.has_return;
   if (value === undefined || value === null || value === "") return true;
-  if (typeof value === "string") return !["false", "0", "no", "none", "no return"].includes(value.trim().toLowerCase());
+  if (typeof value === "string")
+    return !["false", "0", "no", "none", "no return"].includes(
+      value.trim().toLowerCase(),
+    );
   return Boolean(value);
 }
 
@@ -499,8 +521,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
   const activeImage = gallery[imageIndex] || p.image;
   const previousImage = () =>
     setImageIndex((i) => (i + gallery.length - 1) % gallery.length);
-  const nextImage = () =>
-    setImageIndex((i) => (i + 1) % gallery.length);
+  const nextImage = () => setImageIndex((i) => (i + 1) % gallery.length);
 
   return (
     <div className="backdrop" onClick={onClose}>
@@ -575,7 +596,10 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
               </div>
             ))}
           </div>
-          <div className="modal-trust-strip" aria-label="Delivery and product assurance information">
+          <div
+            className="modal-trust-strip"
+            aria-label="Delivery and product assurance information"
+          >
             <div className="modal-trust-item">
               <Truck size={25} strokeWidth={1.8} />
               <b>Delivery</b>
@@ -587,9 +611,19 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
               <span>Authentic product assurance</span>
             </div>
             <div className="modal-trust-item">
-              {productHasReturn(p) ? <RotateCcw size={25} strokeWidth={1.8} /> : <X size={25} strokeWidth={1.8} />}
-              <b>{productHasReturn(p) ? "72-hour easy return" : "*No Return"}</b>
-              <span>{productHasReturn(p) ? "Request within 72 hours of delivery" : "This product is not returnable"}</span>
+              {productHasReturn(p) ? (
+                <RotateCcw size={25} strokeWidth={1.8} />
+              ) : (
+                <X size={25} strokeWidth={1.8} />
+              )}
+              <b>
+                {productHasReturn(p) ? "72-hour easy return" : "*No Return"}
+              </b>
+              <span>
+                {productHasReturn(p)
+                  ? "Request within 72 hours of delivery"
+                  : "This product is not returnable"}
+              </span>
             </div>
           </div>
           <div className="modal-buttons">
@@ -869,8 +903,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
   const dealProducts = products
     .filter(
       (p) =>
-        p.category === upsellCategory &&
-        !items.some((x) => x.p.id === p.id),
+        p.category === upsellCategory && !items.some((x) => x.p.id === p.id),
     )
     .sort((a, b) => {
       const discountDiff = discount(b) - discount(a);
@@ -893,7 +926,11 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
   useEffect(() => {
     if (!open) return;
     setCoupon(appliedCoupon || "");
-    setCouponMessage(appliedCoupon ? `${appliedCoupon} applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF` : "");
+    setCouponMessage(
+      appliedCoupon
+        ? `${appliedCoupon} applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`
+        : "",
+    );
   }, [open]);
 
   useEffect(() => {
@@ -935,30 +972,44 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
               <div className="cart-items">
                 {items.map((x) => {
                   const itemMrp = mrp(x.p);
-                  const off = itemMrp > x.p.price
-                    ? Math.max(0, Math.round((1 - x.p.price / itemMrp) * 100))
-                    : 0;
+                  const off =
+                    itemMrp > x.p.price
+                      ? Math.max(0, Math.round((1 - x.p.price / itemMrp) * 100))
+                      : 0;
                   return (
                     <div className="cart-item" key={x.p.id}>
                       <div className="cart-item-badge">{off}% off</div>
                       <img src={x.p.image} alt="" />
                       <div className="ci">
                         <b>{x.p.name}</b>
-                        <small>{x.p.brand} · {x.p.category}</small>
+                        <small>
+                          {x.p.brand} · {x.p.category}
+                        </small>
                         <div className="ci-price">
                           <del>{money(mrp(x.p))}</del>
                           <strong>{money(x.p.price)}</strong>
                         </div>
                         <div className="qty">
-                          <button onClick={() => onChange(x.p, -1)} aria-label="Decrease quantity">
+                          <button
+                            onClick={() => onChange(x.p, -1)}
+                            aria-label="Decrease quantity"
+                          >
                             <Minus />
                           </button>
                           <span>{x.qty}</span>
-                          <button onClick={() => onChange(x.p, 1)} aria-label="Increase quantity">
+                          <button
+                            onClick={() => onChange(x.p, 1)}
+                            aria-label="Increase quantity"
+                          >
                             <Plus />
                           </button>
                         </div>
-                        <button className="cart-delete" onClick={() => onRemove(x.p)} aria-label={`Delete ${x.p.name} from cart`} title="Delete item">
+                        <button
+                          className="cart-delete"
+                          onClick={() => onRemove(x.p)}
+                          aria-label={`Delete ${x.p.name} from cart`}
+                          title="Delete item"
+                        >
                           <Trash2 size={14} />
                         </button>
                       </div>
@@ -979,56 +1030,110 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   />
                   <button onClick={applyCoupon}>Apply</button>
                 </div>
-                {couponMessage && <small className={appliedCoupon ? "coupon-success" : "coupon-error"}>{couponMessage}</small>}
+                {couponMessage && (
+                  <small
+                    className={
+                      appliedCoupon ? "coupon-success" : "coupon-error"
+                    }
+                  >
+                    {couponMessage}
+                  </small>
+                )}
                 <div className="coupon-offer-list">
-                  <button onClick={() => { setCoupon("NEW05"); setAppliedCoupon("NEW05"); setCouponMessage(`NEW05 applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`); }}>
+                  <button
+                    onClick={() => {
+                      setCoupon("NEW05");
+                      setAppliedCoupon("NEW05");
+                      setCouponMessage(
+                        `NEW05 applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`,
+                      );
+                    }}
+                  >
                     NEW05 <b>₹{discountedSubtotal > 1000 ? 49 : 19} OFF</b>
                   </button>
-                  <button onClick={() => { setCoupon("FIRSTBUY"); setAppliedCoupon("FIRSTBUY"); setCouponMessage(`FIRSTBUY applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`); }}>
+                  <button
+                    onClick={() => {
+                      setCoupon("FIRSTBUY");
+                      setAppliedCoupon("FIRSTBUY");
+                      setCouponMessage(
+                        `FIRSTBUY applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`,
+                      );
+                    }}
+                  >
                     FIRSTBUY <b>₹{discountedSubtotal > 1000 ? 49 : 19} OFF</b>
                   </button>
                 </div>
-                <button className="offers-link" onClick={() => setCoupon("NEW05")}>
+                <button
+                  className="offers-link"
+                  onClick={() => setCoupon("NEW05")}
+                >
                   View All Offers <ArrowRight size={16} />
                 </button>
               </section>
 
               {dealProducts.length > 0 && (
-              <section className="cart-deals">
-                <div className="cart-deals-title">
-                  <span>BEST DEALS</span>
-                  <b>{upsellCategory ? `More ${upsellCategory} deals` : "Complete your set"}</b>
-                </div>
-                <div className="cart-deals-row">
-                  {dealProducts.map((p) => (
-                    <div className="cart-deal-card" key={p.id}>
-                      <img src={p.image} alt="" />
-                      <b title={p.name}>{p.name}</b>
-                      <div>
-                        {p.oldPrice && <del>{money(p.oldPrice)}</del>}
-                        <strong>{money(p.price)}</strong>
+                <section className="cart-deals">
+                  <div className="cart-deals-title">
+                    <span>BEST DEALS</span>
+                    <b>
+                      {upsellCategory
+                        ? `More ${upsellCategory} deals`
+                        : "Complete your set"}
+                    </b>
+                  </div>
+                  <div className="cart-deals-row">
+                    {dealProducts.map((p) => (
+                      <div className="cart-deal-card" key={p.id}>
+                        <img src={p.image} alt="" />
+                        <b title={p.name}>{p.name}</b>
+                        <div>
+                          {p.oldPrice && <del>{money(p.oldPrice)}</del>}
+                          <strong>{money(p.price)}</strong>
+                        </div>
+                        <small>{discount(p)}% off</small>
+                        <button onClick={() => onChange(p, 0)}>Add</button>
                       </div>
-                      <small>{discount(p)}% off</small>
-                      <button onClick={() => onChange(p, 0)}>Add</button>
-                    </div>
-                  ))}
-                </div>
-              </section>
+                    ))}
+                  </div>
+                </section>
               )}
             </div>
 
             <div className="cart-foot">
               <div className="cart-calculation">
-                <div><span>MRP</span><b>{money(mrpTotal)}</b></div>
-                <div><span>Discounted Price</span><b>{money(discountedSubtotal)}</b></div>
                 <div>
-                  <span>{appliedCoupon ? `Coupon Deduction (${appliedCoupon})` : "Coupon Deduction"}</span>
+                  <span>MRP</span>
+                  <b>{money(mrpTotal)}</b>
+                </div>
+                <div>
+                  <span>Discounted Price</span>
+                  <b>{money(discountedSubtotal)}</b>
+                </div>
+                <div>
+                  <span>
+                    {appliedCoupon
+                      ? `Coupon Deduction (${appliedCoupon})`
+                      : "Coupon Deduction"}
+                  </span>
                   <b>−{money(couponDiscount)}</b>
                 </div>
-                <div className="cart-final-line"><span>Final Payable</span><b>{money(total)}</b></div>
+                <div className="cart-final-line">
+                  <span>Final Payable</span>
+                  <b>{money(total)}</b>
+                </div>
               </div>
-              <div className="cart-saved">₹{(productDiscount + couponDiscount).toLocaleString("en-IN")} Saved so far!</div>
-              <button onClick={() => onCheckout({ coupon: appliedCoupon, discount: couponDiscount })}>
+              <div className="cart-saved">
+                ₹{(productDiscount + couponDiscount).toLocaleString("en-IN")}{" "}
+                Saved so far!
+              </div>
+              <button
+                onClick={() =>
+                  onCheckout({
+                    coupon: appliedCoupon,
+                    discount: couponDiscount,
+                  })
+                }
+              >
                 Checkout
               </button>
             </div>
@@ -1038,7 +1143,12 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
     </>
   );
 }
-function Checkout({ open, onClose, items, couponInfo = { code: "", discount: 0 } }) {
+function Checkout({
+  open,
+  onClose,
+  items,
+  couponInfo = { code: "", discount: 0 },
+}) {
   const [f, setF] = useState({ name: "", phone: "", address: "", pincode: "" });
   useEffect(() => {
     if (open) {
@@ -1120,7 +1230,11 @@ function Checkout({ open, onClose, items, couponInfo = { code: "", discount: 0 }
         <div className="checkout-summary">
           <span>
             Order total
-            {couponInfo.code && <small className="checkout-coupon">{couponInfo.code} · ₹{couponInfo.discount || 0} OFF</small>}
+            {couponInfo.code && (
+              <small className="checkout-coupon">
+                {couponInfo.code} · ₹{couponInfo.discount || 0} OFF
+              </small>
+            )}
           </span>
           <b>{money(orderTotal)}</b>
         </div>
@@ -1178,7 +1292,6 @@ function Footer({ setInfo, wishCount, onWishlist }) {
       <div className="footer-inner">
         <div className="footer-brand">
           <Logo />
-          <p className="footer-tagline">A cleaner way to discover good deals.</p>
           <p className="footer-subtagline">Shop more. Save bigger.</p>
           <p>
             Curated deals from trusted brands with simple WhatsApp ordering.
@@ -1240,18 +1353,35 @@ function SpecialDealsPage({ onOpen, onAdd, onWish, wished, onSeen, onBack }) {
     <main className="special-page">
       <section className="special-hero reveal">
         <div className="special-hero-copy">
-          <span className="kicker"><Zap size={12} fill="currentColor" /> TODAY'S SPECIAL</span>
-          <h1>10 deals. <span>One day.</span> Big savings.</h1>
-          <p>Our hand-picked 10 offers with sharp prices, limited-time deal badges and DealKart's simple WhatsApp checkout.</p>
+          <span className="kicker">
+            <Zap size={12} fill="currentColor" /> TODAY'S SPECIAL
+          </span>
+          <h1>
+            10 deals. <span>One day.</span> Big savings.
+          </h1>
+          <p>
+            Our hand-picked 10 offers with sharp prices, limited-time deal
+            badges and DealKart's simple WhatsApp checkout.
+          </p>
           <div className="special-pills">
-            <span><Sparkles size={13} /> Lowest-price picks</span>
-            <span><Clock3 size={13} /> Today's selection</span>
-            <span><ShieldCheck size={13} /> Verified shopping</span>
+            <span>
+              <Sparkles size={13} /> Lowest-price picks
+            </span>
+            <span>
+              <Clock3 size={13} /> Today's selection
+            </span>
+            <span>
+              <ShieldCheck size={13} /> Verified shopping
+            </span>
           </div>
         </div>
         <div className="special-hero-badge">
           <b>10</b>
-          <span>BEST DEALS<br />OF THE DAY</span>
+          <span>
+            BEST DEALS
+            <br />
+            OF THE DAY
+          </span>
         </div>
       </section>
       <section className="section special-list-section">
@@ -1259,9 +1389,14 @@ function SpecialDealsPage({ onOpen, onAdd, onWish, wished, onSeen, onBack }) {
           <div>
             <span className="kicker">LOWEST PRICE EVER*</span>
             <h2>Today's 10 Best Deals</h2>
-            <p>Only ten hand-picked offers make this list. Check back tomorrow for a fresh selection.</p>
+            <p>
+              Only ten hand-picked offers make this list. Check back tomorrow
+              for a fresh selection.
+            </p>
           </div>
-          <button className="special-back" onClick={onBack}><ArrowRight size={15} /> Back to all deals</button>
+          <button className="special-back" onClick={onBack}>
+            <ArrowRight size={15} /> Back to all deals
+          </button>
         </div>
         <div className="special-grid">
           {specialDeals.map((p, index) => (
@@ -1278,7 +1413,10 @@ function SpecialDealsPage({ onOpen, onAdd, onWish, wished, onSeen, onBack }) {
             </div>
           ))}
         </div>
-        <p className="special-disclaimer">*“Lowest price ever” is DealKart promotional wording for this featured selection and is not a historical price guarantee.</p>
+        <p className="special-disclaimer">
+          *“Lowest price ever” is DealKart promotional wording for this featured
+          selection and is not a historical price guarantee.
+        </p>
       </section>
     </main>
   );
@@ -1301,7 +1439,10 @@ function App() {
         products = remote;
         specialDeals = remote
           .filter((p) => p.isTop10)
-          .sort((a, b) => (Number(a.top10Rank) || 999999) - (Number(b.top10Rank) || 999999))
+          .sort(
+            (a, b) =>
+              (Number(a.top10Rank) || 999999) - (Number(b.top10Rank) || 999999),
+          )
           .slice(0, 10);
         setCatalogError("");
         setCatalogStatus("ready");
@@ -1311,11 +1452,15 @@ function App() {
         if (cancelled) return;
         products = [];
         specialDeals = [];
-        setCatalogError(error?.message || "Unable to load the latest products.");
+        setCatalogError(
+          error?.message || "Unable to load the latest products.",
+        );
         setCatalogStatus("error");
         refreshCatalog((x) => x + 1);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
   const [q, setQ] = useState("");
   const [page, setPage] = useState(() => {
@@ -1414,7 +1559,13 @@ function App() {
       (p) =>
         (category === "All Deals" || p.category === category) &&
         (!s ||
-          [p.name, p.brand, p.category, p.description, ...(Array.isArray(p.specs) ? p.specs : [])]
+          [
+            p.name,
+            p.brand,
+            p.category,
+            p.description,
+            ...(Array.isArray(p.specs) ? p.specs : []),
+          ]
             .join(" ")
             .toLowerCase()
             .includes(s)),
@@ -1469,7 +1620,10 @@ function App() {
   if (page === "admin") return <AdminPage />;
   if (catalogStatus !== "ready") {
     return (
-      <div id="top" className={`site ${theme === "light" ? "light-theme" : ""}`}>
+      <div
+        id="top"
+        className={`site ${theme === "light" ? "light-theme" : ""}`}
+      >
         <Header
           query={q}
           setQuery={setQ}
@@ -1480,7 +1634,9 @@ function App() {
           onWishlist={() => setWishlistOpen(true)}
           hidden={hidden}
           theme={theme}
-          onToggleTheme={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+          onToggleTheme={() =>
+            setTheme((t) => (t === "dark" ? "light" : "dark"))
+          }
         />
         <main className="catalog-status" aria-live="polite">
           {catalogStatus === "loading" ? (
@@ -1489,7 +1645,9 @@ function App() {
               <h1>Loading latest deals…</h1>
               <p>Fetching the newest products from DealKart.</p>
               <div className="catalog-skeleton-grid" aria-hidden="true">
-                {[1, 2, 3, 4].map((item) => <div className="catalog-skeleton-card" key={item} />)}
+                {[1, 2, 3, 4].map((item) => (
+                  <div className="catalog-skeleton-card" key={item} />
+                ))}
               </div>
             </>
           ) : (
@@ -1497,7 +1655,9 @@ function App() {
               <div className="catalog-status-icon">!</div>
               <h1>We couldn’t load the products</h1>
               <p>{catalogError || "Please try again in a moment."}</p>
-              <button type="button" onClick={() => window.location.reload()}>Retry</button>
+              <button type="button" onClick={() => window.location.reload()}>
+                Retry
+              </button>
             </>
           )}
         </main>
@@ -1525,154 +1685,172 @@ function App() {
           onWish={toggleWish}
           wished={(p) => wish.some((x) => x.id === p.id)}
           onSeen={seen}
-          onBack={() => { window.location.hash = "top"; }}
-        />
-      ) : (
-      <main>
-        <Hero slide={slide} setSlide={setSlide} onExplore={scrollProducts} />
-        <Trust />
-        <section className="section homepage-special reveal" id="top-deals">
-          <div className="section-heading">
-            <div>
-              <span className="kicker"><Zap size={11} fill="currentColor" /> TODAY'S SPECIAL</span>
-              <h2>Today's top deals by <strong>DEALKART PICKS</strong></h2>
-              <p>10 handpicked offers specially selected for today.</p>
-            </div>
-            <a className="view-special" href="#todays-special">View all 10 <ArrowRight size={15} /></a>
-          </div>
-          <div className="special-grid homepage-special-grid">
-            {specialDeals.map((p, index) => (
-              <div className="special-item" key={p.id}>
-                <span className="deal-rank">#{index + 1}</span>
-                <ProductCard p={p} onOpen={setSelected} onAdd={add} onWish={toggleWish} wished={wish.some((x) => x.id === p.id)} onSeen={seen} />
-              </div>
-            ))}
-          </div>
-        </section>
-        <section className="category-strip reveal">
-          <div className="category-intro">
-            <span className="kicker">
-              <Sparkles size={11} /> CURATED FOR YOU
-            </span>
-            <b>Browse by category</b>
-          </div>
-          <div className="category-pills">
-            {categories.map((c) => (
-              <button
-                key={c}
-                className={category === c ? "active" : ""}
-                onClick={() => {
-                  setCategory(c);
-                  scrollProducts();
-                }}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </section>
-        <section className="section products-section" id="products">
-          <div className="section-heading">
-            <div>
-              <span className="kicker">BEST DEALS OF ALL TIME</span>
-              <h2>Best deals Of All Time</h2>
-              <p>
-                Hover a product for quick details · click for full product view.
-              </p>
-            </div>
-            <div className="result">
-              <SlidersHorizontal size={15} />
-              {filtered.length} products
-            </div>
-          </div>
-          {filtered.length ? (
-            <div className="grid">
-              {filtered.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  p={p}
-                  onOpen={setSelected}
-                  onAdd={add}
-                  onWish={toggleWish}
-                  wished={wish.some((x) => x.id === p.id)}
-                  onSeen={seen}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="empty">
-              <Search />
-              <h3>No products found</h3>
-              <p>Try another product, brand or category.</p>
-              <button
-                onClick={() => {
-                  setQ("");
-                  setCategory("All Deals");
-                }}
-              >
-                Clear filters
-              </button>
-            </div>
-          )}
-        </section>
-        <RecentlyViewed
-          items={recent}
-          onOpen={(p) => {
-            seen(p);
-            setSelected(p);
+          onBack={() => {
+            window.location.hash = "top";
           }}
         />
-        <section className="wa-banner reveal">
-          <div>
-            <span className="kicker">SIMPLE ORDERING</span>
-            <h2>See something you like?</h2>
-            <p>
-              Add products to your cart, enter your address, and finish the
-              order in WhatsApp. No account required.
-            </p>
-            <div className="banner-points">
-              <span>
-                <Check size={13} /> No account needed
-              </span>
-              <span>
-                <ShieldCheck size={13} /> Secure order flow
-              </span>
-              <span>
-                <Clock3 size={13} /> Quick support
-              </span>
+      ) : (
+        <main>
+          <Hero slide={slide} setSlide={setSlide} onExplore={scrollProducts} />
+          <Trust />
+          <section className="section homepage-special reveal" id="top-deals">
+            <div className="section-heading">
+              <div>
+                <span className="kicker">
+                  <Zap size={11} fill="currentColor" /> TODAY'S SPECIAL
+                </span>
+                <h2>
+                  Today's top deals by <strong>DEALKART PICKS</strong>
+                </h2>
+                <p>10 handpicked offers specially selected for today.</p>
+              </div>
+              <a className="view-special" href="#todays-special">
+                View all 10 <ArrowRight size={15} />
+              </a>
             </div>
-          </div>
-          <button onClick={() => setCheckout(true)}>
-            <MessageCircle size={18} /> Order on WhatsApp
-          </button>
-        </section>
-        <section className="about-strip reveal">
-          <div>
-            <span className="kicker">WHY DEALKART</span>
-            <h2>A cleaner way to discover good deals.</h2>
-          </div>
-          <div className="about-copy">
-            <p>
-              We keep the buying journey simple: discover a deal, save it, add
-              it to your cart and send your order through WhatsApp.
-            </p>
-            <div className="mini-stats">
-              <span>
-                <b>{products.length}+</b>
-                <small>Curated picks</small>
-              </span>
-              <span>
-                <b>4.5★</b>
-                <small>Average product rating</small>
-              </span>
-              <span>
-                <b>72 hr</b>
-                <small>Easy return window*</small>
-              </span>
+            <div className="special-grid homepage-special-grid">
+              {specialDeals.map((p, index) => (
+                <div className="special-item" key={p.id}>
+                  <span className="deal-rank">#{index + 1}</span>
+                  <ProductCard
+                    p={p}
+                    onOpen={setSelected}
+                    onAdd={add}
+                    onWish={toggleWish}
+                    wished={wish.some((x) => x.id === p.id)}
+                    onSeen={seen}
+                  />
+                </div>
+              ))}
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+          <section className="category-strip reveal">
+            <div className="category-intro">
+              <span className="kicker">
+                <Sparkles size={11} /> CURATED FOR YOU
+              </span>
+              <b>Browse by category</b>
+            </div>
+            <div className="category-pills">
+              {categories.map((c) => (
+                <button
+                  key={c}
+                  className={category === c ? "active" : ""}
+                  onClick={() => {
+                    setCategory(c);
+                    scrollProducts();
+                  }}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </section>
+          <section className="section products-section" id="products">
+            <div className="section-heading">
+              <div>
+                <span className="kicker">BEST DEALS OF ALL TIME</span>
+                <h2>Best deals Of All Time</h2>
+                <p>
+                  Hover a product for quick details · click for full product
+                  view.
+                </p>
+              </div>
+              <div className="result">
+                <SlidersHorizontal size={15} />
+                {filtered.length} products
+              </div>
+            </div>
+            {filtered.length ? (
+              <div className="grid">
+                {filtered.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    p={p}
+                    onOpen={setSelected}
+                    onAdd={add}
+                    onWish={toggleWish}
+                    wished={wish.some((x) => x.id === p.id)}
+                    onSeen={seen}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="empty">
+                <Search />
+                <h3>No products found</h3>
+                <p>Try another product, brand or category.</p>
+                <button
+                  onClick={() => {
+                    setQ("");
+                    setCategory("All Deals");
+                  }}
+                >
+                  Clear filters
+                </button>
+              </div>
+            )}
+          </section>
+          <RecentlyViewed
+            items={recent}
+            onOpen={(p) => {
+              seen(p);
+              setSelected(p);
+            }}
+          />
+          <section className="wa-banner reveal">
+            <div>
+              <span className="kicker">SIMPLE ORDERING</span>
+              <h2>See something you like?</h2>
+              <p>
+                Add products to your cart, enter your address, and finish the
+                order in WhatsApp. No account required.
+              </p>
+              <div className="banner-points">
+                <span>
+                  <Check size={13} /> No account needed
+                </span>
+                <span>
+                  <ShieldCheck size={13} /> Secure order flow
+                </span>
+                <span>
+                  <Clock3 size={13} /> Quick support
+                </span>
+              </div>
+            </div>
+            <button onClick={() => setCheckout(true)}>
+              <MessageCircle size={18} /> Order on WhatsApp
+            </button>
+          </section>
+          <section className="about-strip reveal">
+            <div>
+              <span className="kicker">WHY DEALKART</span>
+              <h2 className="about-headline">
+                A cleaner way to discover good deals.
+              </h2>
+            </div>
+            <div className="about-copy">
+              <p>
+                We keep the buying journey simple: discover a deal, save it, add
+                it to your cart and send your order through WhatsApp.
+              </p>
+              <div className="mini-stats">
+                <span>
+                  <b>{products.length}+</b>
+                  <small>Curated picks</small>
+                </span>
+                <span>
+                  <b>4.5★</b>
+                  <small>Average product rating</small>
+                </span>
+                <span>
+                  <b>72 hr</b>
+                  <small>Easy return window*</small>
+                </span>
+              </div>
+            </div>
+          </section>
+        </main>
       )}
       <Footer
         setInfo={setInfo}
@@ -1716,7 +1894,10 @@ function App() {
         onChange={change}
         onRemove={remove}
         onCheckout={(promo = { coupon: "", discount: 0 }) => {
-          setCouponInfo({ code: promo.coupon || "", discount: promo.discount || 0 });
+          setCouponInfo({
+            code: promo.coupon || "",
+            discount: promo.discount || 0,
+          });
           setCartOpen(false);
           setCheckout(true);
         }}
@@ -1741,16 +1922,38 @@ function App() {
 }
 class AppErrorBoundary extends Component {
   state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(error) { console.error("DealKart storefront error:", error); }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error) {
+    console.error("DealKart storefront error:", error);
+  }
   render() {
     if (this.state.hasError) {
       return (
-        <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, background: "#111", color: "#fff", textAlign: "center" }}>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "grid",
+            placeItems: "center",
+            padding: 24,
+            background: "#111",
+            color: "#fff",
+            textAlign: "center",
+          }}
+        >
           <div>
             <h1>DealKart is temporarily unavailable</h1>
-            <p>Please refresh the page. If the problem continues, check the catalog data in Supabase.</p>
-            <button onClick={() => window.location.reload()} style={{ padding: "10px 16px", cursor: "pointer" }}>Refresh website</button>
+            <p>
+              Please refresh the page. If the problem continues, check the
+              catalog data in Supabase.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ padding: "10px 16px", cursor: "pointer" }}
+            >
+              Refresh website
+            </button>
           </div>
         </div>
       );
@@ -1760,5 +1963,7 @@ class AppErrorBoundary extends Component {
 }
 
 createRoot(document.getElementById("root")).render(
-  <AppErrorBoundary><App /></AppErrorBoundary>,
+  <AppErrorBoundary>
+    <App />
+  </AppErrorBoundary>,
 );

@@ -1056,6 +1056,10 @@ header {
   color: transparent;
   -webkit-text-stroke: 1px rgba(255, 255, 255, 0.7);
 }
+.about-strip h2.about-headline {
+  color: var(--accent);
+  -webkit-text-stroke: 0;
+}
 .about-copy p {
   color: #858585;
   font-size: 13px;
@@ -1156,10 +1160,6 @@ footer {
 }
 .footer-brand .logo {
   margin-bottom: 10px;
-}
-.footer-tagline {
-  color: var(--accent) !important;
-  font-weight: 700;
 }
 .footer-subtagline {
   color: var(--accent) !important;
@@ -4970,7 +4970,6 @@ svg {
 .light-theme .footer-bottom {
   color: #111;
 }
-.light-theme .footer-tagline,
 .light-theme .footer-subtagline {
   color: #c89400 !important;
 }
