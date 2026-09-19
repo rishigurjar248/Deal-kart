@@ -1,6 +1,6 @@
 import { extractedProducts } from "./productData";
 
-export const CATALOG_KEY = "dealkart-catalog-v2";
+export const CATALOG_KEY = "dealkart-catalog-v3";
 
 const asArray = (value) => {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -22,9 +22,15 @@ const asNumber = (value, fallback = 0) => {
 
 export const normalize = (p = {}, index = 0) => {
   const keyPoints = asArray(p.keyPoints ?? p.key_points ?? p.specs).slice(0, 4);
-  const galleryImages = asArray(p.galleryImages ?? p.gallery_images);
-  const images = asArray(p.images);
-  const allImages = [...new Set([...galleryImages, ...images].filter(Boolean))];
+  const legacyGallery = asArray(p.galleryImages ?? p.gallery_images);
+  const legacyImages = asArray(p.images);
+  const imageUrls = asArray(p.imageUrls ?? p.image_urls);
+  const allImages = [...new Set([
+    ...imageUrls,
+    p.image,
+    ...legacyGallery,
+    ...legacyImages,
+  ].filter(Boolean))].slice(0, 5);
   const id = asNumber(p.id, index + 1);
   const price = asNumber(p.price, 0);
   const mrp = asNumber(p.mrp ?? p.oldPrice ?? p.old_price, price);
@@ -43,8 +49,9 @@ export const normalize = (p = {}, index = 0) => {
     rating: asNumber(p.rating, 4.3),
     reviews: p.reviews != null && String(p.reviews) !== "—" ? String(p.reviews) : "0",
     reviewCount: asNumber(p.reviewCount ?? p.review_count, 0),
-    image: String(p.image ?? ""),
-    galleryImages: allImages,
+    image: allImages[0] || "",
+    imageUrls: allImages,
+    galleryImages: allImages.slice(1),
     images: allImages,
     keyPoints,
     specs: keyPoints,
@@ -86,15 +93,12 @@ export async function fetchRemoteCatalog(fallback = [], options = {}) {
   const { fallbackOnError = true } = options;
   try {
     const res = await fetch("/api/catalog", {
-      // Allow the browser/CDN to reuse a recent public catalog response.
       cache: "default",
       headers: { Accept: "application/json" },
     });
     if (!res.ok) throw new Error(`Catalog request failed (${res.status})`);
     const json = await res.json();
-    if (!Array.isArray(json.products)) {
-      throw new Error("Invalid catalog response from server.");
-    }
+    if (!Array.isArray(json.products)) throw new Error("Invalid catalog response from server.");
     return json.products.map(normalize);
   } catch (error) {
     console.warn("Remote catalog could not be loaded.", error);

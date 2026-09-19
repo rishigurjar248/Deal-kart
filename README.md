@@ -1,69 +1,111 @@
 # DealKart Combined Storefront
 
-This version combines the **POP-inspired visual direction** with the **222 DealKart functionality**.
+DealKart storefront + secure admin catalog manager.
 
-### Included
-- POP-style dark, premium storefront appearance
-- DealKart branding
-- Real product images from 222
-- Search across product name, brand, category, description and specs
-- Category navigation
-- Hover product details
-- Product detail modal
-- Wishlist
-- Cart with quantity controls and remove
-- WhatsApp direct buying
-- Cart checkout on WhatsApp
-- Customer name, phone, full address and pincode collection before WhatsApp
-- Responsive desktop/tablet/mobile layout
-- Lucide icons and Vite + React
+## Product database architecture
 
-### Setup
+The catalog uses:
+
+- **Supabase PostgreSQL** for product text/options, pricing, rating, Top 10 state and other structured data.
+- **`product_images` table** for up to **5 ordered image URLs per product**.
+- **Supabase Storage (`product-images`)** for optional direct image uploads from the admin panel.
+- The browser only receives public image URLs; the Supabase service-role key stays server-side.
+
+### Product fields
+
+Each product can store:
+
+- Product name
+- Brand
+- Category
+- MRP
+- My price
+- Rating
+- Reviews
+- Return policy
+- Description
+- 4 key points
+- Today's Top 10 + rank
+- Up to 5 images
+- Active/inactive state
+
+### Image workflow
+
+In the admin panel you can either:
+
+1. Paste a public image URL into Image 1–5, or
+2. Choose images and upload them to the private admin upload endpoint, which creates a signed upload URL and stores the files in the public `product-images` bucket.
+
+The database stores the resulting URL and position. The image binary is never placed inside PostgreSQL or converted to a base64 string.
+
+## Supabase setup
+
+Run `SUPABASE_SETUP.sql` in the Supabase SQL Editor before using the new image manager.
+
+It creates/updates:
+
+- `products`
+- `product_images`
+- indexes and read policies
+- the public `product-images` Storage bucket
+
+The server API uses the Supabase service-role key, so keep it server-side only.
+
+## Environment variables
+
+### Vercel / server
+
+```env
+ADMIN_EMAIL=your-admin-email@example.com
+ADMIN_PASSWORD=your-strong-admin-password
+ADMIN_SESSION_SECRET=at-least-32-random-characters
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SUPABASE_SERVICE_ROLE_KEY
+```
+
+### Browser build
+
+```env
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+```
+
+The `VITE_*` values are public client credentials. **Never** put `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, or `ADMIN_SESSION_SECRET` in a `VITE_*` variable or frontend source code.
+
+## Deploying
+
+1. Open the Supabase project.
+2. Run `SUPABASE_SETUP.sql`.
+3. In Supabase → Project Settings → API, copy the Project URL, anon key and service-role key.
+4. In Vercel → Project → Settings → Environment Variables, add all six variables above.
+5. Redeploy Vercel.
+6. Open the DealKart admin page and log in.
+7. Add/edit a product and use **Save catalog**.
+8. Add up to five image URLs or upload images to Supabase Storage.
+9. Refresh the storefront on another device. The same product data and image URLs will be loaded from the global database.
+
+## Image-size recommendation
+
+The Supabase Free plan has limited Storage. For a catalog of roughly 100 products × 5 images, do not keep original 2–3 MB files if you can avoid it. Convert product images to WebP/JPEG and target roughly **300–800 KB per image** while keeping the product readable.
+
+## Local development
+
 ```bash
 npm install
 npm run dev
 ```
 
-### Production build
-```bash
-npm run build
-```
+For local development, create `.env.local` from `.env.example`. Do not commit `.env.local`.
 
-### WhatsApp number
-Edit `WHATSAPP_NUMBER` in `src/main.jsx`. Use country code without `+`, spaces or dashes.
+## Existing legacy data
 
-## Product catalog extraction
-The supplied screenshot catalog has been converted into individual cropped product images and structured product records. See `PRODUCT_EXTRACTION.md`, `src/productData.js`, and `src/assets/products/`.
+The existing `products.image`, `gallery_images` and `images` columns are retained for compatibility. The new `product_images` table becomes the normalized source for the admin-managed five-image gallery. Existing legacy images continue to work until the product is saved again from the admin panel.
 
-## 🔐 Secure Admin Authentication
+## API routes
 
-Admin credentials are **not stored in the React/JSX frontend**. The admin login now uses Vercel server-side functions and an `HttpOnly` signed session cookie.
-
-Before deploying:
-
-1. In Vercel, open **Project → Settings → Environment Variables**.
-2. Add these variables for Production (and Preview/Development if needed):
-   - `ADMIN_EMAIL` — your admin email
-   - `ADMIN_PASSWORD` — a new strong admin password
-   - `ADMIN_SESSION_SECRET` — a long random secret (at least 32 random characters)
-3. **Do not put these values in `src/`, `.env` committed to Git, or any `VITE_*` frontend variable.**
-4. Redeploy after adding/changing the variables.
-
-The repository may remain private, but the important protection is that the credentials are kept server-side. The deployed browser code contains no admin email or password.
-
-**Important:** the old credentials that were previously hard-coded in `src/AdminPage.jsx` should be considered rotated. Set a new password in Vercel before going live.
-
-### Local development
-
-Create a local `.env.local` (never commit it):
-
-```env
-ADMIN_EMAIL=your-admin-email@example.com
-ADMIN_PASSWORD=your-new-strong-password
-ADMIN_SESSION_SECRET=replace-with-a-long-random-secret
-```
-
-The Vercel API routes are:
-- `POST /api/admin-login`
-- `GET /api/admin-session`
-- `POST /api/admin-logout`
+- `GET /api/catalog` — public active catalog
+- `PUT /api/catalog` — authenticated catalog save
+- `POST /api/storage-upload-url` — authenticated signed image-upload URL
+- `POST /api/admin-login` — admin login
+- `GET /api/admin-session` — session check
+- `POST /api/admin-logout` — logout

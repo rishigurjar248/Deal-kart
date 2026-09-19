@@ -1,6 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Download, ImagePlus, LogOut, Plus, Save, ShieldCheck, Trash2, Upload, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  ImagePlus,
+  Link as LinkIcon,
+  LogOut,
+  Plus,
+  Save,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { getInitialCatalog, fetchRemoteCatalog, saveCatalog } from "./catalogStore";
+import { supabaseBrowser } from "./supabaseClient";
+
+const MAX_IMAGES = 5;
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 async function checkAdminSession() {
   try {
@@ -23,15 +39,24 @@ const blank = () => ({
   rating: "4.3",
   reviews: "0",
   image: "",
+  imageUrls: [],
   galleryImages: [],
   description: "",
   keyPoints: ["", "", "", ""],
   specs: ["", "", "", ""],
   isTop10: false,
+  top10Rank: null,
   returnEligible: true,
 });
 
 const csvEscape = (v) => `"${String(v ?? "").replaceAll('"', '""')}"`;
+
+const getImages = (product) => {
+  const source = product.imageUrls?.length
+    ? product.imageUrls
+    : [product.image, ...(product.galleryImages || [])];
+  return [...new Set(source.filter(Boolean))].slice(0, MAX_IMAGES);
+};
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -77,46 +102,107 @@ function Login({ onLogin }) {
 }
 
 function ImageManager({ product, update }) {
-  const addImages = (files) => {
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const images = getImages(product);
+
+  const setImageAt = (index, value) => {
+    const next = [...images];
+    next[index] = value.trim();
+    update(product.id, "imageUrls", next.slice(0, MAX_IMAGES));
+  };
+
+  const removeImage = (index) => {
+    const next = images.filter((_, i) => i !== index);
+    update(product.id, "imageUrls", next);
+  };
+
+  const uploadImages = async (files) => {
+    setUploadError("");
+    if (!supabaseBrowser) {
+      setUploadError("Browser Supabase keys are missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to Vercel.");
+      return;
+    }
     const selected = Array.from(files || []).filter(f => f.type.startsWith("image/"));
     if (!selected.length) return;
-    let remaining = selected.length;
-    const urls = [];
-    selected.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        urls.push(reader.result);
-        remaining -= 1;
-        if (!remaining) {
-          const all = [product.image, ...(product.galleryImages || []), ...urls].filter(Boolean);
-          update(product.id, "image", all[0] || "");
-          update(product.id, "galleryImages", [...new Set(all)]);
+    const slots = MAX_IMAGES - images.length;
+    if (slots <= 0) {
+      setUploadError("This product already has 5 images. Remove one before uploading another.");
+      return;
+    }
+    const batch = selected.slice(0, slots);
+    if (selected.length > slots) setUploadError(`Only ${slots} image${slots === 1 ? "" : "s"} fit in the remaining slots.`);
+
+    setUploading(true);
+    try {
+      const uploaded = [];
+      for (const file of batch) {
+        if (file.size > MAX_UPLOAD_BYTES) {
+          throw new Error(`${file.name} is larger than 5 MB. Compress it to WebP/JPEG before uploading.`);
         }
-      };
-      reader.readAsDataURL(file);
-    });
+        const signRes = await fetch("/api/storage-upload-url", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fileName: file.name, contentType: file.type }),
+        });
+        const signJson = await signRes.json().catch(() => ({}));
+        if (!signRes.ok || !signJson.token || !signJson.path) {
+          throw new Error(signJson.error || "Could not prepare image upload.");
+        }
+        const { error } = await supabaseBrowser.storage
+          .from("product-images")
+          .uploadToSignedUrl(signJson.path, signJson.token, file);
+        if (error) throw new Error(error.message);
+        uploaded.push(signJson.publicUrl);
+      }
+      update(product.id, "imageUrls", [...images, ...uploaded].slice(0, MAX_IMAGES));
+    } catch (error) {
+      setUploadError(error.message || "Image upload failed.");
+    } finally {
+      setUploading(false);
+    }
   };
-  const removeImage = (url) => {
-    const all = [product.image, ...(product.galleryImages || [])].filter(Boolean).filter(x => x !== url);
-    update(product.id, "image", all[0] || "");
-    update(product.id, "galleryImages", all.slice(1));
-  };
-  const images = [product.image, ...(product.galleryImages || [])].filter(Boolean);
 
   return (
     <div className="admin-images">
-      <label className="admin-upload-images">
-        <ImagePlus size={17}/> Add multiple images
-        <input type="file" accept="image/*" multiple onChange={e => { addImages(e.target.files); e.target.value = ""; }} />
-      </label>
-      <div className="admin-image-list">
-        {images.map((url, i) => (
-          <div className="admin-image-thumb" key={`${url}-${i}`}>
-            <img src={url} alt="" />
-            <button type="button" onClick={() => removeImage(url)} aria-label="Remove image"><X size={13}/></button>
+      <div className="admin-image-help">
+        <span><b>{images.length}/{MAX_IMAGES}</b> images</span>
+        <small>Paste an existing public image URL or upload to DealKart Storage.</small>
+      </div>
+      <div className="admin-image-slots">
+        {Array.from({ length: MAX_IMAGES }).map((_, i) => (
+          <div className="admin-image-slot" key={i}>
+            <div className="admin-image-slot-head">
+              <b>Image {i + 1}</b>
+              {images[i] && <button type="button" onClick={() => removeImage(i)} aria-label={`Remove image ${i + 1}`}><X size={13}/></button>}
+            </div>
+            <div className="admin-url-input">
+              <LinkIcon size={14}/>
+              <input
+                value={images[i] || ""}
+                onChange={e => setImageAt(i, e.target.value)}
+                placeholder="https://example.com/product.webp"
+                type="url"
+              />
+            </div>
+            {images[i] ? (
+              <div className="admin-image-preview">
+                <img src={images[i]} alt={`Product view ${i + 1}`} onError={e => { e.currentTarget.dataset.error = "true"; }} />
+                <span>Preview</span>
+              </div>
+            ) : (
+              <div className="admin-image-empty"><ImagePlus size={18}/><span>Paste URL above</span></div>
+            )}
           </div>
         ))}
       </div>
+      <label className={`admin-upload-images ${uploading ? "disabled" : ""}`}>
+        <Upload size={16}/>{uploading ? "Uploading…" : "Upload images to Supabase Storage"}
+        <input type="file" accept="image/*" multiple disabled={uploading || images.length >= MAX_IMAGES} onChange={e => { uploadImages(e.target.files); e.target.value = ""; }} />
+      </label>
+      {uploadError && <div className="admin-image-error">{uploadError}</div>}
+      <small className="admin-image-tip">For the Free plan, keep images around 300–800 KB each when possible. WebP is recommended.</small>
     </div>
   );
 }
@@ -127,6 +213,8 @@ export default function AdminPage() {
   const [items, setItems] = useState(() => getInitialCatalog());
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     if (authenticated) {
@@ -135,13 +223,10 @@ export default function AdminPage() {
       return;
     }
     checkAdminSession().then(ok => {
-      if (ok) {
-        setAuthenticated(true);
-      }
+      if (ok) setAuthenticated(true);
       setCheckingSession(false);
     });
   }, [authenticated]);
-  const [query, setQuery] = useState("");
 
   const visible = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -152,7 +237,10 @@ export default function AdminPage() {
     setItems(rows => rows.map(p => p.id === id ? { ...p, [key]: value } : p));
 
   const updatePoint = (id, index, value) =>
-    setItems(rows => rows.map(p => p.id === id ? { ...p, keyPoints: [...(p.keyPoints || ["","","",""]),].slice(0,4).map((x,i) => i === index ? value : x) } : p));
+    setItems(rows => rows.map(p => p.id === id ? {
+      ...p,
+      keyPoints: [...(p.keyPoints || ["", "", "", ""])].slice(0, 4).map((x, i) => i === index ? value : x),
+    } : p));
 
   const add = () => setItems(rows => [...rows, blank()]);
   const remove = (id) => setItems(rows => rows.filter(p => p.id !== id));
@@ -162,48 +250,59 @@ export default function AdminPage() {
       const current = rows.find(p => p.id === id);
       if (!current) return rows;
       if (!current.isTop10) {
-        const count = rows.filter(p => p.isTop10).length;
-        if (count >= 10) {
-          alert("Top 10 Today Deals already has 10 products. Remove one before adding another.");
+        const selected = rows.filter(p => p.isTop10);
+        if (selected.length >= 10) {
+          alert("Today's Top 10 already has 10 products. Remove one before adding another.");
           return rows;
         }
+        const used = new Set(selected.map(p => Number(p.top10Rank)).filter(Boolean));
+        const rank = [1,2,3,4,5,6,7,8,9,10].find(n => !used.has(n)) || selected.length + 1;
+        return rows.map(p => p.id === id ? { ...p, isTop10: true, top10Rank: rank } : p);
       }
-      return rows.map(p => p.id === id ? { ...p, isTop10: !p.isTop10 } : p);
+      return rows.map(p => p.id === id ? { ...p, isTop10: false, top10Rank: null } : p);
     });
   };
 
-  const save = () => {
-    const cleaned = items.map((p, i) => {
-      const points = [...(p.keyPoints || p.specs || [])].slice(0,4);
-      while (points.length < 4) points.push("");
-      const images = [p.image, ...(p.galleryImages || [])].filter(Boolean);
-      return {
-        ...p,
-        id: Number(p.id) || i + 1,
-        page: Number(p.page) || Number(p.id) || i + 1,
-        price: Number(p.price) || 0,
-        mrp: Number(p.mrp) || Number(p.oldPrice) || Number(p.price) || 0,
-        oldPrice: Number(p.mrp) || Number(p.oldPrice) || Number(p.price) || 0,
-        discount: Number(p.discount) || 0,
-        rating: Number(p.rating) || 4.3,
-        reviews: String(p.reviews || "0"),
-        keyPoints: points,
-        specs: points,
-        image: images[0] || "",
-        galleryImages: images.slice(1),
-        isTop10: Boolean(p.isTop10),
-        returnEligible: p.returnEligible !== false,
-      };
-    });
-    saveCatalog(cleaned).then(() => {
+  const save = async () => {
+    setSaving(true);
+    try {
+      const cleaned = items.map((p, i) => {
+        const points = [...(p.keyPoints || p.specs || [])].slice(0, 4);
+        while (points.length < 4) points.push("");
+        const images = getImages(p);
+        return {
+          ...p,
+          id: Number(p.id) || i + 1,
+          page: Number(p.page) || Number(p.id) || i + 1,
+          price: Number(p.price) || 0,
+          mrp: Number(p.mrp) || Number(p.oldPrice) || Number(p.price) || 0,
+          oldPrice: Number(p.mrp) || Number(p.oldPrice) || Number(p.price) || 0,
+          discount: Number(p.discount) || 0,
+          rating: Number(p.rating) || 4.3,
+          reviews: String(p.reviews || "0"),
+          keyPoints: points,
+          specs: points,
+          image: images[0] || "",
+          imageUrls: images,
+          galleryImages: images.slice(1),
+          isTop10: Boolean(p.isTop10),
+          top10Rank: p.isTop10 ? Number(p.top10Rank) || null : null,
+          returnEligible: p.returnEligible !== false,
+        };
+      });
+      await saveCatalog(cleaned);
       setItems(cleaned);
       setSaved(true);
       setTimeout(() => setSaved(false), 2200);
-    }).catch((error) => alert(`Could not save globally: ${error.message}`));
+    } catch (error) {
+      alert(`Could not save globally: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const exportCsv = () => {
-    const cols = ["id","name","brand","category","price","mrp","discount","rating","reviews","image","description","keyPoints","isTop10","returnEligible"];
+    const cols = ["id","name","brand","category","price","mrp","discount","rating","reviews","imageUrls","description","keyPoints","isTop10","top10Rank","returnEligible"];
     const csv = [cols, ...items.map(p => cols.map(c => Array.isArray(p[c]) ? p[c].join(" | ") : p[c]))]
       .map(r => r.map(csvEscape).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -222,21 +321,21 @@ export default function AdminPage() {
     <div className="admin-page">
       <div className="admin-head">
         <div>
-          <button className="admin-back" onClick={() => { window.location.hash = "top"; }}> <ArrowLeft size={16}/> Website</button>
+          <button className="admin-back" onClick={() => { window.location.hash = "top"; }}><ArrowLeft size={16}/> Website</button>
           <span className="kicker">DEALKART CATALOG</span>
           <h1>Product Manager</h1>
-          <p>Add, edit or remove products. Changes are saved to the global database and reflected on the storefront.</p>
+          <p>All product text lives in PostgreSQL. Up to 5 image URLs are stored separately in the product image table, with optional uploads to Supabase Storage.</p>
         </div>
         <div className="admin-actions">
           <button className="admin-btn secondary" onClick={logout}><LogOut size={16}/> Log out</button>
           <button className="admin-btn secondary" onClick={exportCsv}><Download size={16}/> Export CSV</button>
-          <button className="admin-btn primary" onClick={save}><Save size={16}/> {saved ? "Saved!" : "Save catalog"}</button>
+          <button className="admin-btn primary" onClick={save} disabled={saving}>{saving ? "Saving…" : saved ? "Saved!" : "Save catalog"}</button>
         </div>
       </div>
 
       <div className="admin-toolbar">
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search products, brand or category…" />
-        <span>{items.length} items · {items.filter(p => p.isTop10).length}/10 top deals</span>
+        <span>{loadingCatalog ? "Loading…" : `${items.length} items · ${items.filter(p => p.isTop10).length}/10 top deals`}</span>
         <button className="admin-btn primary" onClick={add}><Plus size={16}/> Add product</button>
       </div>
 
@@ -255,17 +354,17 @@ export default function AdminPage() {
               <label>My price<input type="number" value={p.price ?? ""} onChange={e => update(p.id,"price",e.target.value)} /></label>
               <label>Rating<input type="number" min="0" max="5" step="0.1" value={p.rating ?? ""} onChange={e => update(p.id,"rating",e.target.value)} /></label>
               <label>Reviews<input value={p.reviews ?? ""} onChange={e => update(p.id,"reviews",e.target.value)} /></label>
-              <label className="admin-top-toggle"><span>Today's Top 10</span><button type="button" className={p.isTop10 ? "on" : ""} onClick={() => toggleTop10(p.id)}>{p.isTop10 ? "✓ Added to Top 10" : "Add to Top 10"}</button></label>
+              <label className="admin-top-toggle"><span>Today's Top 10</span><button type="button" className={p.isTop10 ? "on" : ""} onClick={() => toggleTop10(p.id)}>{p.isTop10 ? `✓ Top 10 #${p.top10Rank || ""}` : "Add to Top 10"}</button></label>
               <label className="admin-top-toggle"><span>Return policy</span><button type="button" className={p.returnEligible !== false ? "on" : ""} onClick={() => update(p.id, "returnEligible", p.returnEligible === false)}>{p.returnEligible !== false ? "✓ 72-hour return" : "* No Return"}</button></label>
               <label className="admin-wide">Description<textarea value={p.description || ""} onChange={e => update(p.id,"description",e.target.value)} /></label>
               <div className="admin-wide"><div className="admin-field-title">4 Key points</div><div className="admin-points">{[0,1,2,3].map(i => <input key={i} placeholder={`Key point ${i+1}`} value={(p.keyPoints || p.specs || [])[i] || ""} onChange={e => updatePoint(p.id,i,e.target.value)} />)}</div></div>
-              <div className="admin-wide"><div className="admin-field-title">Product images</div><ImageManager product={p} update={update}/></div>
+              <div className="admin-wide"><div className="admin-field-title">Product images — maximum 5</div><ImageManager product={p} update={update}/></div>
             </div>
           </section>
         ))}
       </div>
       {!visible.length && <div className="admin-empty">No products match your search.</div>}
-      <div className="admin-note"><b>Tip:</b> Use Save catalog after changes. A maximum of 10 products can be marked for Today's Top 10.</div>
+      <div className="admin-note"><b>Recommended:</b> use WebP images around 300–800 KB. You can paste any public image URL, or upload directly to the <code>product-images</code> Supabase Storage bucket. Changes are global after <b>Save catalog</b>.</div>
     </div>
   );
 }
