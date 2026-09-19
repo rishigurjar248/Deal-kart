@@ -1178,7 +1178,8 @@ function Footer({ setInfo, wishCount, onWishlist }) {
       <div className="footer-inner">
         <div className="footer-brand">
           <Logo />
-          <p className="footer-tagline">Shop more. Save bigger.</p>
+          <p className="footer-tagline">A cleaner way to discover good deals.</p>
+          <p className="footer-subtagline">Shop more. Save bigger.</p>
           <p>
             Curated deals from trusted brands with simple WhatsApp ordering.
           </p>
