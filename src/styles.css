@@ -2049,7 +2049,7 @@ footer {
   .header-actions {
     gap: 8px;
   }
-  .head-count span {
+  .head-count .action-label {
     display: none;
   }
   .nav-inner {
