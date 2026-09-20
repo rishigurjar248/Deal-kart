@@ -575,7 +575,9 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
             </>
           )}
         </div>
-        <div className="modal-info">
+        <div
+          className={`modal-info ${descriptionExpanded ? "description-expanded" : ""}`}
+        >
           <span className="brand">{p.brand}</span>
           <h2>{p.name}</h2>
           <div className="rating">

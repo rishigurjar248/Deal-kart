@@ -5895,6 +5895,30 @@ svg {
     padding: 42px 35px 28px;
   }
 
+  .modal-info.description-expanded {
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    scrollbar-color: #777 rgba(255, 255, 255, 0.08);
+  }
+
+  .modal-info.description-expanded::-webkit-scrollbar {
+    width: 7px;
+  }
+
+  .modal-info.description-expanded::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+  }
+
+  .modal-info.description-expanded::-webkit-scrollbar-thumb {
+    background: #777;
+    border-radius: 8px;
+  }
+
+  .modal-info.description-expanded::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+
   .modal-description p {
     max-height: 82px;
     overflow: hidden;
