@@ -3840,7 +3840,7 @@ svg {
 
 /* Keep gallery thumbnails visible, aligned, and individually selectable. */
 .gallery-thumbs {
-  justify-content: flex-start;
+  justify-content: safe center;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 2px 2px 4px;
@@ -3848,10 +3848,10 @@ svg {
 }
 
 .gallery-thumbs button {
-  flex: 0 0 64px;
-  width: 64px;
-  height: 64px;
-  padding: 4px;
+  flex: 0 0 76px;
+  width: 76px;
+  height: 76px;
+  padding: 3px;
   background: rgba(0, 0, 0, 0.72);
 }
 
