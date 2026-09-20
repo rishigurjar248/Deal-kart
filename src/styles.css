@@ -3838,6 +3838,36 @@ svg {
   }
 }
 
+/* Keep gallery thumbnails visible, aligned, and individually selectable. */
+.gallery-thumbs {
+  justify-content: flex-start;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 4px;
+  scrollbar-width: thin;
+}
+
+.gallery-thumbs button {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.gallery-thumbs img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.gallery-thumbs button.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
 /* Cart deal drawer — intentionally scoped to the cart only. */
 .cart {
   width: min(485px, 100vw);
