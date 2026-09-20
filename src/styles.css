@@ -5863,6 +5863,62 @@ svg {
   color: #625d55;
 }
 
+/* Desktop product view: show the complete product beside concise details. */
+.modal-read-more {
+  display: none;
+}
+
+@media (min-width: 751px) and (min-height: 679px) {
+  .modal {
+    width: min(1040px, 96vw);
+    max-height: calc(100dvh - 40px);
+    grid-template-columns: minmax(0, 46%) minmax(0, 54%);
+    overflow: hidden;
+  }
+
+  .modal-image {
+    min-height: 0;
+    height: min(760px, calc(100dvh - 40px));
+    overflow: hidden;
+    background: #f7f7f7;
+  }
+
+  .modal-image img {
+    object-fit: contain;
+    object-position: center;
+    padding: 18px;
+  }
+
+  .modal-info {
+    min-width: 0;
+    overflow-y: auto;
+    padding: 42px 35px 28px;
+  }
+
+  .modal-description p {
+    max-height: 82px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .modal-description p.expanded {
+    max-height: none;
+  }
+
+  .modal-read-more {
+    display: inline-block;
+    padding: 0;
+    background: none;
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 800;
+  }
+
+  .modal-read-more:hover {
+    color: var(--accent2);
+  }
+}
+
 @media (max-width: 760px) {
   .trust b {
     font-size: 12px;

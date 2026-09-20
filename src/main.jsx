@@ -515,7 +515,9 @@ function productHasReturn(p) {
 
 function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
   const [imageIndex, setImageIndex] = useState(0);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   useEffect(() => setImageIndex(0), [p?.id]);
+  useEffect(() => setDescriptionExpanded(false), [p?.id]);
   if (!p) return null;
   const gallery = getProductGallery(p);
   const activeImage = gallery[imageIndex] || p.image;
@@ -587,7 +589,18 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
             <b>{money(salePrice(p))}</b>
             <span className="sale-offer">{discount(p)}% off</span>
           </div>
-          <p>{p.description}</p>
+          <div className="modal-description">
+            <p className={descriptionExpanded ? "expanded" : ""}>
+              {p.description}
+            </p>
+            <button
+              className="modal-read-more"
+              type="button"
+              onClick={() => setDescriptionExpanded((expanded) => !expanded)}
+            >
+              {descriptionExpanded ? "Read less" : "Read more"}
+            </button>
+          </div>
           <div className="specs">
             {(Array.isArray(p.specs) ? p.specs : []).map((s) => (
               <div key={s}>
