@@ -515,10 +515,18 @@ function productHasReturn(p) {
 
 function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
   const [imageIndex, setImageIndex] = useState(0);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   useEffect(() => setImageIndex(0), [p?.id]);
+  useEffect(() => setDescriptionExpanded(false), [p?.id]);
   if (!p) return null;
   const gallery = getProductGallery(p);
   const activeImage = gallery[imageIndex] || p.image;
+  const description = p.description || "";
+  const descriptionIsLong = description.length > 280;
+  const visibleDescription =
+    descriptionIsLong && !descriptionExpanded
+      ? `${description.slice(0, 280).trimEnd()}...`
+      : description;
   const previousImage = () =>
     setImageIndex((i) => (i + gallery.length - 1) % gallery.length);
   const nextImage = () => setImageIndex((i) => (i + 1) % gallery.length);
@@ -587,7 +595,17 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
             <b>{money(salePrice(p))}</b>
             <span className="sale-offer">{discount(p)}% off</span>
           </div>
-          <p>{p.description}</p>
+          <p className="modal-description">{visibleDescription}</p>
+          {descriptionIsLong && (
+            <button
+              className="description-toggle"
+              type="button"
+              onClick={() => setDescriptionExpanded((expanded) => !expanded)}
+              aria-expanded={descriptionExpanded}
+            >
+              {descriptionExpanded ? "Show less" : "Read more"}
+            </button>
+          )}
           <div className="specs">
             {(Array.isArray(p.specs) ? p.specs : []).map((s) => (
               <div key={s}>
