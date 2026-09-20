@@ -2916,24 +2916,24 @@ header {
     padding: 0 9px;
   }
 
-  /* Keep the product backdrop compact on wide screens too. */
-  @media (min-width: 1001px) {
-    .modal {
-      width: min(620px, 96vw);
-      max-height: 92vh;
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .modal-image {
-      min-height: 270px;
-      height: 300px;
-      max-height: 300px;
-    }
-
-    .modal-info {
-      padding: 25px 20px;
-    }
+/* Keep the product backdrop compact on wide screens too. */
+@media (min-width: 1001px) {
+  .modal {
+    width: min(620px, 96vw);
+    max-height: 92vh;
+    grid-template-columns: minmax(0, 1fr);
   }
+
+  .modal-image {
+    min-height: 270px;
+    height: 300px;
+    max-height: 300px;
+  }
+
+  .modal-info {
+    padding: 25px 20px;
+  }
+}
   .action-label {
     display: none;
   }
@@ -3981,14 +3981,6 @@ svg {
 }
 .qty .trash {
   display: none;
-}
-
-/* Keep the main product layout stable when the viewport grows past 760px. */
-@media (min-width: 761px) {
-  .products-section .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-  }
 }
 .cart-addon {
   width: calc(100% - 0px);
