@@ -10,16 +10,6 @@
 .modal-image img {
   display: block;
 }
-.modal-image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
-  overflow: hidden;
-}
-.modal-image > img {
-  object-fit: contain;
-}
 @media (max-width: 760px) {
   .modal {
     grid-template-columns: minmax(0, 1fr);
@@ -1277,7 +1267,7 @@ footer {
 .modal {
   width: min(900px, 96vw);
   max-height: 90vh;
-  overflow: hidden;
+  overflow: auto;
   background: #141414;
   border: 1px solid #303030;
   border-radius: 18px;
@@ -1304,14 +1294,14 @@ footer {
   background: #252525;
 }
 .modal-image {
-  min-height: 0;
+  min-height: 500px;
   background: #1a1a1a;
   position: relative;
 }
 .modal-image img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 .modal-heart {
   position: absolute;
@@ -1468,19 +1458,6 @@ footer {
   color: #999;
   font-size: 12px;
   line-height: 1.7;
-}
-.description-toggle {
-  display: inline-flex;
-  align-items: center;
-  padding: 0;
-  margin: -4px 0 6px;
-  background: none;
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 800;
-}
-.description-toggle:hover {
-  color: var(--accent2);
 }
 .specs {
   display: grid;
