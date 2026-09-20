@@ -3868,6 +3868,22 @@ svg {
   box-shadow: 0 0 0 1px var(--accent);
 }
 
+@media (max-width: 900px) {
+  .gallery-thumbs button {
+    flex-basis: 56px;
+    width: 56px;
+    height: 56px;
+  }
+}
+
+@media (max-width: 760px) {
+  .gallery-thumbs button {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
 /* Cart deal drawer — intentionally scoped to the cart only. */
 .cart {
   width: min(485px, 100vw);
