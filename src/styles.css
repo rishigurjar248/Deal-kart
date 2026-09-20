@@ -2915,6 +2915,25 @@ header {
   .delivery.head-action {
     padding: 0 9px;
   }
+
+/* Keep the product backdrop compact on wide screens too. */
+@media (min-width: 1001px) {
+  .modal {
+    width: min(620px, 96vw);
+    max-height: 92vh;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .modal-image {
+    min-height: 270px;
+    height: 300px;
+    max-height: 300px;
+  }
+
+  .modal-info {
+    padding: 25px 20px;
+  }
+}
   .action-label {
     display: none;
   }
