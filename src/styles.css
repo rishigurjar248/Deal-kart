@@ -5857,7 +5857,7 @@ svg {
   width: 100%;
   object-fit: contain;
   object-position: center center;
-  padding: 30px 24px;
+  padding: 30px 24px 92px;
 }
 
 .modal-info {
@@ -5888,7 +5888,7 @@ svg {
   }
 
   .modal-image > img {
-    padding: 24px 18px;
+    padding: 24px 18px 82px;
   }
 
   .modal-info {
@@ -5903,7 +5903,7 @@ svg {
   }
 
   .modal-image > img {
-    padding: 22px 12px;
+    padding: 22px 12px 76px;
   }
 
   .gallery-thumbs {
