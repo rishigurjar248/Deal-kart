@@ -5846,17 +5846,12 @@ svg {
   height: min(72vh, 650px);
   min-height: 0;
   align-self: start;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .modal-image > img {
-  display: block;
   height: 100%;
-  width: 100%;
   object-fit: contain;
-  object-position: center center;
+  object-position: center;
   padding: 30px 24px 92px;
 }
 
