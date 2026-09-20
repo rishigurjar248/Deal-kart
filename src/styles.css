@@ -3848,9 +3848,9 @@ svg {
 }
 
 .gallery-thumbs button {
-  flex: 0 0 76px;
-  width: 76px;
-  height: 76px;
+  flex: 0 0 88px;
+  width: 88px;
+  height: 88px;
   padding: 3px;
   background: rgba(0, 0, 0, 0.72);
 }
