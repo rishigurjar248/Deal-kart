@@ -3298,6 +3298,74 @@ svg {
     max-width: none;
   }
 
+  /* Improve secondary text contrast in the dark theme without changing light mode. */
+  .site:not(.light-theme) .topbar-inner,
+  .site:not(.light-theme) .topbar-inner > span,
+  .site:not(.light-theme) .search > svg,
+  .site:not(.light-theme) .nav-inner a,
+  .site:not(.light-theme) .delivery,
+  .site:not(.light-theme) .head-count,
+  .site:not(.light-theme) .result,
+  .site:not(.light-theme) .wishlist-line {
+    color: #a6a6a6;
+  }
+
+  .site:not(.light-theme) .topbar-note,
+  .site:not(.light-theme) .nav-trust,
+  .site:not(.light-theme) .trust small,
+  .site:not(.light-theme) .section-heading p,
+  .site:not(.light-theme) .content small,
+  .site:not(.light-theme) .price del,
+  .site:not(.light-theme) .hover-price del,
+  .site:not(.light-theme) .recent-card small,
+  .site:not(.light-theme) .recent-card > svg,
+  .site:not(.light-theme) .footer-trust span,
+  .site:not(.light-theme) .footer-bottom,
+  .site:not(.light-theme) .modal-price del,
+  .site:not(.light-theme) .mrp-label,
+  .site:not(.light-theme) .modal-continue,
+  .site:not(.light-theme) .wishlist-head small,
+  .site:not(.light-theme) .cart-headline small,
+  .site:not(.light-theme) .wish-item small,
+  .site:not(.light-theme) .ci small,
+  .site:not(.light-theme) .cart-foot span,
+  .site:not(.light-theme) .checkout p,
+  .site:not(.light-theme) .checkout-summary span {
+    color: #9a9a9a;
+  }
+
+  .site:not(.light-theme) .hero-proof,
+  .site:not(.light-theme) .hover-meta,
+  .site:not(.light-theme) .hover p,
+  .site:not(.light-theme) .hover ul,
+  .site:not(.light-theme) .wa-banner p,
+  .site:not(.light-theme) .banner-points span,
+  .site:not(.light-theme) .about-copy p,
+  .site:not(.light-theme) .mini-stats small,
+  .site:not(.light-theme) .footer-inner p,
+  .site:not(.light-theme) .footer-inner a,
+  .site:not(.light-theme) .footer-inner button,
+  .site:not(.light-theme) .modal-info > p,
+  .site:not(.light-theme) .specs div,
+  .site:not(.light-theme) .info-body,
+  .site:not(.light-theme) .wishlist-empty,
+  .site:not(.light-theme) .cart-empty,
+  .site:not(.light-theme) .checkout-note {
+    color: #b0b0b0;
+  }
+
+  .site:not(.light-theme) .search input::placeholder {
+    color: #8f8f8f;
+  }
+
+  .site:not(.light-theme) .category-pills button {
+    color: #b7b7b7;
+  }
+
+  .site:not(.light-theme) .content p,
+  .site:not(.light-theme) .floating-support span {
+    color: #989898;
+  }
   .hero-poster-stage img {
     object-fit: contain;
     padding: 0;
