@@ -3819,26 +3819,6 @@ svg {
   }
 }
 
-/* Keep product details usable on compact tablet and short laptop viewports. */
-@media (max-width: 1023px), (max-height: 678px) {
-  .modal {
-    width: min(620px, calc(100vw - 20px));
-    max-height: calc(100dvh - 20px);
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .modal-image {
-    min-height: 0;
-    height: min(46vh, 340px);
-    max-height: none;
-  }
-
-  .modal-info {
-    min-width: 0;
-    padding: 22px 18px 26px;
-  }
-}
-
 /* Cart deal drawer — intentionally scoped to the cart only. */
 .cart {
   width: min(485px, 100vw);
