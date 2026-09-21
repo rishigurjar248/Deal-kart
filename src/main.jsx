@@ -1858,9 +1858,14 @@ function App() {
                 </span>
               </div>
             </div>
-            <button onClick={() => setCheckout(true)}>
+            <a
+              href={WHATSAPP_HELP_URL}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Order on WhatsApp"
+            >
               <MessageCircle size={18} /> Order on WhatsApp
-            </button>
+            </a>
           </section>
           <section className="about-strip reveal">
             <div>
