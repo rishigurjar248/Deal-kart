@@ -303,12 +303,6 @@ function Header({
 }
 function Hero({ slide, setSlide, onExplore }) {
   const s = heroSlides[slide];
-  const [previousSlide, setPreviousSlide] = useState(slide);
-  useEffect(() => {
-    if (previousSlide === slide) return undefined;
-    const timer = window.setTimeout(() => setPreviousSlide(slide), 700);
-    return () => window.clearTimeout(timer);
-  }, [previousSlide, slide]);
   return (
     <section
       className="hero reveal"
@@ -318,19 +312,7 @@ function Hero({ slide, setSlide, onExplore }) {
         className="hero-poster-stage"
         style={{ "--hero-bg": `url(${s.image})` }}
       >
-        {previousSlide !== slide && (
-          <img
-            className="hero-poster-image hero-poster-image-exit"
-            src={heroSlides[previousSlide].image}
-            alt=""
-          />
-        )}
-        <img
-          key={slide}
-          className="hero-poster-image hero-poster-image-enter"
-          src={s.image}
-          alt={s.alt}
-        />
+        <img key={slide} src={s.image} alt={s.alt} />
       </div>
       <div className="hero-frame">
         <div className="hero-live">
@@ -1526,7 +1508,7 @@ function App() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setSlide((currentSlide) => (currentSlide + 1) % heroSlides.length);
-    }, 5000);
+    }, 3000);
     return () => window.clearInterval(timer);
   }, []);
   useEffect(() => {
