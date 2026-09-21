@@ -1181,6 +1181,12 @@ function Checkout({
     /^\d{10}$/.test(f.phone.trim()) &&
     /^\d{6}$/.test(f.pincode.trim()) &&
     f.address.trim();
+  const whatsappUrl = ok ? waUrl(items, f, couponInfo) : "";
+  const continueToWhatsApp = () => {
+    if (!ok || isSubmitting) return;
+    setIsSubmitting(true);
+    window.location.assign(whatsappUrl);
+  };
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="checkout" onClick={(e) => e.stopPropagation()}>
@@ -1246,22 +1252,14 @@ function Checkout({
           </span>
           <b>{money(orderTotal)}</b>
         </div>
-        <a
+        <button
+          type="button"
           className={"checkout-btn " + (!ok || isSubmitting ? "disabled" : "")}
-          href={ok && !isSubmitting ? waUrl(items, f, couponInfo) : undefined}
-          target="_blank"
-          rel="noreferrer"
-          aria-disabled={isSubmitting || !ok}
-          onClick={(e) => {
-            if (!ok || isSubmitting) {
-              e.preventDefault();
-              return;
-            }
-            setIsSubmitting(true);
-          }}
+          disabled={!ok || isSubmitting}
+          onClick={continueToWhatsApp}
         >
           <MessageCircle size={18} /> Continue to WhatsApp
-        </a>
+        </button>
         <div className="checkout-note">
           <ShieldCheck size={14} /> Your details are only used to prepare your
           WhatsApp order message.
