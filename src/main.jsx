@@ -1897,25 +1897,6 @@ function App() {
           </section>
         </main>
       )}
-      <section className="whatsapp-help-section reveal">
-        <div className="whatsapp-help-inner">
-          <div className="whatsapp-help-copy">
-            <span className="kicker">ORDER ON WHATSAPP</span>
-            <h2>
-              Need help with your order or product? Chat with us on WhatsApp.
-            </h2>
-          </div>
-          <a
-            className="whatsapp-help-button"
-            href={WHATSAPP_HELP_URL}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Order on WhatsApp"
-          >
-            💬 ORDER ON WHATSAPP
-          </a>
-        </div>
-      </section>
       <Footer
         setInfo={setInfo}
         wishCount={wish.length}
