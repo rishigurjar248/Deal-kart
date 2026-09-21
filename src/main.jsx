@@ -66,8 +66,7 @@ let specialDeals = initialProducts
   .slice(0, 10);
 
 const heroSlides = [
-  // Default hero: Stock Up Days poster. Other posters are shown only when
-  // the customer explicitly uses the carousel controls.
+  // Default hero: Stock Up Days poster.
   { image: heroStock, alt: "Stock up days DealKart offers" },
   { image: heroFitness, alt: "Stronger every day fitness deals" },
   { image: heroGym, alt: "Home gym equipment deals" },
@@ -1506,6 +1505,12 @@ function App() {
   const [hidden, setHidden] = useState(false);
   const [toast, setToast] = useState("");
   const [couponInfo, setCouponInfo] = useState({ code: "", discount: 0 });
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setSlide((currentSlide) => (currentSlide + 1) % heroSlides.length);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     const onHash = () => {
       if (window.location.hash === "#admin") setPage("admin");
