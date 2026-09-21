@@ -1757,6 +1757,7 @@ function App() {
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
+                    onBuyNow={buyNow}
                   />
                 </div>
               ))}
