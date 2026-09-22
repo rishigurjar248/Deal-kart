@@ -5430,7 +5430,7 @@ svg {
   backdrop-filter: blur(4px);
 }
 .admin-add-modal {
-  width: min(700px, 100%);
+  width: min(1240px, 100%);
   max-height: min(760px, 92vh);
   overflow: auto;
   padding: 24px;
@@ -5468,7 +5468,7 @@ svg {
 }
 .admin-add-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 .admin-add-grid label {
@@ -5493,6 +5493,22 @@ svg {
 .admin-add-grid textarea {
   min-height: 74px;
   resize: vertical;
+}
+.admin-add-toggle {
+  min-height: 39px;
+  border: 1px solid #d9d2c3;
+  border-radius: 9px;
+  background: #fffdf8;
+  color: #655e51;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.admin-add-toggle.on {
+  background: #d8aa32;
+  border-color: #d8aa32;
+  color: #211b0e;
 }
 .admin-add-grid input:focus,
 .admin-add-grid textarea:focus {
