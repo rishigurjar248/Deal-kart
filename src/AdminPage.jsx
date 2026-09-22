@@ -1,4 +1,6 @@
 import {
+  ChevronDown,
+  ChevronUp,
   ArrowLeft,
   Download,
   ImagePlus,
@@ -302,6 +304,7 @@ function ImageManager({ product, update }) {
 function snapshotProduct(p = {}) {
   return {
     id: Number(p.id),
+    sortOrder: Number(p.sortOrder ?? p.sort_order ?? 0),
     page: Number(p.page ?? p.id),
     name: String(p.name ?? ""),
     brand: String(p.brand ?? ""),
@@ -334,6 +337,7 @@ export default function AdminPage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [query, setQuery] = useState("");
+  const [expandedIds, setExpandedIds] = useState(() => new Set());
   const originalRef = useRef(new Map());
   const deletedRef = useRef(new Set());
 
@@ -342,7 +346,10 @@ export default function AdminPage() {
       fetchRemoteCatalog(getInitialCatalog())
         .then((remote) => {
           const ordered = [...remote].sort(
-            (a, b) => Number(a.id) - Number(b.id),
+            (a, b) =>
+              (Number(a.sortOrder) || Number.MAX_SAFE_INTEGER) -
+                (Number(b.sortOrder) || Number.MAX_SAFE_INTEGER) ||
+              Number(a.id) - Number(b.id),
           );
           setItems(ordered);
           originalRef.current = new Map(
@@ -389,6 +396,23 @@ export default function AdminPage() {
     );
 
   const add = () => setNewProduct(blank());
+  const toggleExpanded = (id) =>
+    setExpandedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const moveProduct = (id, direction) => {
+    setItems((rows) => {
+      const index = rows.findIndex((product) => product.id === id);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= rows.length) return rows;
+      const next = [...rows];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      return next;
+    });
+  };
   const updateNewProduct = (key, value) =>
     setNewProduct((product) => ({ ...product, [key]: value }));
   const updateNewPoint = (index, value) =>
@@ -427,6 +451,7 @@ export default function AdminPage() {
     const images = getImages(newProduct);
     const product = {
       ...newProduct,
+    sortOrder: items.length + 1,
       name: newProduct.name.trim(),
       brand: newProduct.brand.trim(),
       category: newProduct.category.trim(),
@@ -499,6 +524,7 @@ export default function AdminPage() {
         const images = getImages(p);
         return {
           ...p,
+          sortOrder: i + 1,
           id: Number(p.id) || i + 1,
           page: Number(p.page) || Number(p.id) || i + 1,
           price: Number(p.price) || 0,
@@ -670,23 +696,22 @@ export default function AdminPage() {
       <div className="admin-cards">
         {visible.map((p, rowIndex) => (
           <section
-            className={`admin-product-card ${p.isTop10 ? "featured" : ""}`}
+            className={`admin-product-card ${p.isTop10 ? "featured" : ""} ${expandedIds.has(p.id) ? "expanded" : "collapsed"}`}
             key={p.id}
           >
-            <div className="admin-product-title">
+            <div className="admin-product-title" onClick={() => toggleExpanded(p.id)}>
               <div>
                 <span className="admin-row-number">#{rowIndex + 1}</span>
                 <h2>{p.name || "New product"}</h2>
               </div>
-              <button
-                className="delete-row"
-                title="Remove product"
-                onClick={() => remove(p.id)}
-              >
-                <Trash2 size={17} />
-              </button>
+              <div className="admin-product-controls">
+                <button type="button" className="admin-move" title="Move product up" disabled={rowIndex === 0} onClick={(event) => { event.stopPropagation(); moveProduct(p.id, -1); }}><ChevronUp size={16} /></button>
+                <button type="button" className="admin-move" title="Move product down" disabled={rowIndex === visible.length - 1} onClick={(event) => { event.stopPropagation(); moveProduct(p.id, 1); }}><ChevronDown size={16} /></button>
+                <button type="button" className="admin-expand" title={expandedIds.has(p.id) ? "Collapse product" : "Expand product"} onClick={(event) => { event.stopPropagation(); toggleExpanded(p.id); }}>{expandedIds.has(p.id) ? <ChevronUp size={17} /> : <ChevronDown size={17} />}</button>
+                <button type="button" className="delete-row" title="Remove product" onClick={(event) => { event.stopPropagation(); remove(p.id); }}><Trash2 size={17} /></button>
+              </div>
             </div>
-            <div className="admin-form-grid">
+            {expandedIds.has(p.id) && <div className="admin-form-grid">
               <label>
                 Product name
                 <input
@@ -794,7 +819,7 @@ export default function AdminPage() {
                 </div>
                 <ImageManager product={p} update={update} />
               </div>
-            </div>
+            </div>}
           </section>
         ))}
       </div>

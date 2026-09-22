@@ -38,6 +38,7 @@ export const normalize = (p = {}, index = 0) => {
   return {
     ...p,
     id,
+    sortOrder: asNumber(p.sortOrder ?? p.sort_order, 0),
     page: asNumber(p.page, id),
     name: String(p.name ?? p.title ?? "Untitled product"),
     brand: String(p.brand ?? "DealKart"),

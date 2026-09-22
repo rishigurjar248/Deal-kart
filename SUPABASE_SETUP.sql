@@ -28,6 +28,7 @@ create table if not exists public.products (
 );
 
 alter table public.products add column if not exists return_eligible boolean not null default true;
+alter table public.products add column if not exists sort_order integer;
 alter table public.products add column if not exists updated_at timestamptz not null default now();
 
 create table if not exists public.product_images (

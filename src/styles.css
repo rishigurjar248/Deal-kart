@@ -5697,6 +5697,7 @@ svg {
   justify-content: space-between;
   gap: 15px;
   margin-bottom: 15px;
+  cursor: pointer;
 }
 .admin-product-title > div {
   display: flex;
@@ -5710,6 +5711,34 @@ svg {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.admin-product-card.collapsed .admin-product-title {
+  margin-bottom: 0;
+}
+.admin-product-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+.admin-move,
+.admin-expand {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d9d2c3;
+  border-radius: 9px;
+  background: #fffdf8;
+  color: #625b4e;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.admin-move:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.admin-expand {
+  color: #8a6812;
 }
 .admin-row-number {
   font-size: 11px;
@@ -5858,6 +5887,18 @@ svg {
   }
   .admin-product-title h2 {
     font-size: 15px;
+  }
+  .admin-product-title {
+    align-items: flex-start;
+  }
+  .admin-product-controls {
+    gap: 3px;
+  }
+  .admin-move,
+  .admin-expand,
+  .admin-product-controls .delete-row {
+    width: 30px;
+    height: 30px;
   }
   .admin-actions,
   .admin-actions .admin-btn {

@@ -20,6 +20,7 @@ const mapRow = (r = {}, imageRows = []) => {
 
   return {
     id: Number(r.id),
+    sortOrder: Number(r.sort_order ?? 0),
     page: Number(r.page ?? r.id),
     name: r.name ?? "",
     brand: r.brand ?? "",
@@ -53,6 +54,7 @@ const mapProduct = (p = {}) => {
 
   return {
     id: Number(p.id),
+    sort_order: Number(p.sortOrder ?? p.sort_order ?? 0),
     page: Number(p.page ?? p.id),
     name: String(p.name ?? ""),
     brand: String(p.brand ?? ""),
@@ -87,9 +89,10 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     const { data, error } = await db
       .from("products")
-      .select("id,page,name,brand,category,price,mrp,old_price,discount,rating,reviews,review_count,image,gallery_images,images,key_points,description,is_top10,top10_rank,is_active,return_eligible,created_at")
+      .select("id,page,sort_order,name,brand,category,price,mrp,old_price,discount,rating,reviews,review_count,image,gallery_images,images,key_points,description,is_top10,top10_rank,is_active,return_eligible,created_at")
       .eq("is_active", true)
       .order("top10_rank", { ascending: true, nullsFirst: false })
+      .order("sort_order", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: false });
     if (error) return res.status(500).json({ error: error.message });
 
