@@ -223,6 +223,8 @@ export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [items, setItems] = useState(() => getInitialCatalog());
+  const [newProduct, setNewProduct] = useState(null);
+  const [addingProduct, setAddingProduct] = useState(false);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -233,8 +235,9 @@ export default function AdminPage() {
   useEffect(() => {
     if (authenticated) {
       fetchRemoteCatalog(getInitialCatalog()).then(remote => {
-        setItems(remote);
-        originalRef.current = new Map(remote.map(p => [Number(p.id), snapshotProduct(p)]));
+        const ordered = [...remote].sort((a, b) => Number(a.id) - Number(b.id));
+        setItems(ordered);
+        originalRef.current = new Map(ordered.map(p => [Number(p.id), snapshotProduct(p)]));
         deletedRef.current = new Set();
       }).finally(() => setLoadingCatalog(false));
       setCheckingSession(false);
@@ -260,7 +263,49 @@ export default function AdminPage() {
       keyPoints: [...(p.keyPoints || ["", "", "", ""])].slice(0, 4).map((x, i) => i === index ? value : x),
     } : p));
 
-  const add = () => setItems(rows => [...rows, blank()]);
+  const add = () => setNewProduct(blank());
+  const updateNewProduct = (key, value) => setNewProduct(product => ({ ...product, [key]: value }));
+  const updateNewPoint = (index, value) => setNewProduct(product => ({
+    ...product,
+    keyPoints: product.keyPoints.map((point, pointIndex) => pointIndex === index ? value : point),
+  }));
+
+  const saveNewProduct = async (event) => {
+    event.preventDefault();
+    if (!newProduct) return;
+    setAddingProduct(true);
+    const images = [newProduct.image.trim()].filter(Boolean);
+    const product = {
+      ...newProduct,
+      name: newProduct.name.trim(),
+      brand: newProduct.brand.trim(),
+      category: newProduct.category.trim(),
+      price: Number(newProduct.price) || 0,
+      mrp: Number(newProduct.mrp) || Number(newProduct.price) || 0,
+      oldPrice: Number(newProduct.mrp) || Number(newProduct.price) || 0,
+      rating: Number(newProduct.rating) || 4.3,
+      reviews: String(newProduct.reviews || "0"),
+      image: images[0] || "",
+      imageUrls: images,
+      galleryImages: [],
+      specs: newProduct.keyPoints,
+      isActive: true,
+      __imagesChanged: true,
+    };
+    try {
+      await saveCatalog([product]);
+      setItems(rows => [...rows, product]);
+      originalRef.current.set(Number(product.id), snapshotProduct(product));
+      setNewProduct(null);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2200);
+    } catch (error) {
+      alert(`Could not add product: ${error.message}`);
+    } finally {
+      setAddingProduct(false);
+    }
+  };
+
   const remove = (id) => {
     setItems(rows => rows.filter(p => p.id !== id));
     if (originalRef.current.has(Number(id))) deletedRef.current.add(Number(id));
@@ -405,6 +450,30 @@ export default function AdminPage() {
       </div>
       {!visible.length && <div className="admin-empty">No products match your search.</div>}
       <div className="admin-note"><b>Recommended:</b> use WebP images around 300–800 KB. You can paste any public image URL, or upload directly to the <code>product-images</code> Supabase Storage bucket. Changes are global after <b>Save catalog</b>.</div>
+
+      {newProduct && (
+        <div className="admin-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setNewProduct(null); }}>
+          <form className="admin-add-modal" onSubmit={saveNewProduct}>
+            <div className="admin-modal-head">
+              <div><span className="kicker">NEW CATALOG ITEM</span><h2>Add product</h2><p>Enter the product details, then save it to the live catalog.</p></div>
+              <button type="button" className="admin-modal-close" onClick={() => setNewProduct(null)} aria-label="Close add product form"><X size={18}/></button>
+            </div>
+            <div className="admin-add-grid">
+              <label>Product name<input autoFocus required value={newProduct.name} onChange={event => updateNewProduct("name", event.target.value)} placeholder="e.g. Wireless headphones" /></label>
+              <label>Brand<input required value={newProduct.brand} onChange={event => updateNewProduct("brand", event.target.value)} placeholder="Brand name" /></label>
+              <label>Category<input required value={newProduct.category} onChange={event => updateNewProduct("category", event.target.value)} placeholder="Electronics" /></label>
+              <label>My price<input required min="0" step="0.01" type="number" value={newProduct.price} onChange={event => updateNewProduct("price", event.target.value)} /></label>
+              <label>MRP<input required min="0" step="0.01" type="number" value={newProduct.mrp} onChange={event => updateNewProduct("mrp", event.target.value)} /></label>
+              <label>Rating<input min="0" max="5" step="0.1" type="number" value={newProduct.rating} onChange={event => updateNewProduct("rating", event.target.value)} /></label>
+              <label>Reviews<input min="0" type="number" value={newProduct.reviews} onChange={event => updateNewProduct("reviews", event.target.value)} /></label>
+              <label>Primary image URL<input type="url" value={newProduct.image} onChange={event => updateNewProduct("image", event.target.value)} placeholder="https://..." /></label>
+              <label className="admin-add-wide">Description<textarea value={newProduct.description} onChange={event => updateNewProduct("description", event.target.value)} placeholder="Short product description" /></label>
+              <div className="admin-add-wide"><div className="admin-field-title">Key points</div><div className="admin-points">{newProduct.keyPoints.map((point, index) => <input key={index} placeholder={`Key point ${index + 1}`} value={point} onChange={event => updateNewPoint(index, event.target.value)} />)}</div></div>
+            </div>
+            <div className="admin-modal-foot"><button type="button" className="admin-btn secondary" onClick={() => setNewProduct(null)}>Cancel</button><button className="admin-btn primary" type="submit" disabled={addingProduct}><Save size={16}/>{addingProduct ? "Saving…" : "Save product"}</button></div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

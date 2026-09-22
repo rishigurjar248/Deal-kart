@@ -5419,6 +5419,97 @@ svg {
   color: #777266;
   font-size: 12px;
 }
+.admin-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(39, 37, 31, 0.42);
+  backdrop-filter: blur(4px);
+}
+.admin-add-modal {
+  width: min(700px, 100%);
+  max-height: min(760px, 92vh);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid #ddd6c8;
+  border-radius: 16px;
+  background: #fffdf8;
+  box-shadow: 0 24px 70px rgba(50, 40, 20, 0.22);
+}
+.admin-modal-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.admin-modal-head h2 {
+  margin: 5px 0 3px;
+  font-size: 24px;
+}
+.admin-modal-head p {
+  margin: 0;
+  color: #777266;
+  font-size: 12px;
+}
+.admin-modal-close {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid #d9d2c3;
+  border-radius: 9px;
+  background: #fff;
+  color: #625b4e;
+  cursor: pointer;
+}
+.admin-add-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.admin-add-grid label {
+  display: grid;
+  gap: 6px;
+  color: #625b4e;
+  font-size: 11px;
+  font-weight: 800;
+}
+.admin-add-grid input,
+.admin-add-grid textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d9d2c3;
+  border-radius: 9px;
+  padding: 9px;
+  background: #fff;
+  color: #27251f;
+  font: inherit;
+  font-size: 13px;
+}
+.admin-add-grid textarea {
+  min-height: 74px;
+  resize: vertical;
+}
+.admin-add-grid input:focus,
+.admin-add-grid textarea:focus {
+  outline: 2px solid #d8aa32;
+  border-color: transparent;
+}
+.admin-add-wide {
+  grid-column: 1/-1;
+}
+.admin-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #eee9df;
+}
 @media (max-width: 760px) {
   .admin-page {
     padding: 20px 12px;
@@ -5435,6 +5526,12 @@ svg {
   }
   .admin-toolbar input {
     flex-basis: 100%;
+  }
+  .admin-add-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-add-wide {
+    grid-column: auto;
   }
 }
 
