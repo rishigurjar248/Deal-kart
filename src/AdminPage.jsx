@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Download,
@@ -11,12 +12,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  fetchRemoteCatalog,
-  getInitialCatalog,
-  saveCatalog,
-} from "./catalogStore";
+import { getInitialCatalog, fetchRemoteCatalog, saveCatalog } from "./catalogStore";
 import { supabaseBrowser } from "./supabaseClient";
 
 const MAX_IMAGES = 5;
@@ -91,51 +87,15 @@ function Login({ onLogin }) {
   return (
     <div className="admin-login">
       <form className="admin-login-card" onSubmit={submit}>
-        <div className="admin-login-icon">
-          <ShieldCheck size={28} />
-        </div>
+        <div className="admin-login-icon"><ShieldCheck size={28}/></div>
         <span className="kicker">DEALKART ADMIN</span>
         <h1>Admin access</h1>
         <p>Sign in to add, edit, remove and feature products.</p>
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Admin email"
-            autoComplete="username"
-            required
-          />
-        </label>
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            autoComplete="current-password"
-            required
-          />
-        </label>
+        <label>Email<input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Admin email" autoComplete="username" required /></label>
+        <label>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" autoComplete="current-password" required /></label>
         {error && <div className="admin-error">{error}</div>}
-        <button
-          className="admin-btn primary admin-login-submit"
-          type="submit"
-          disabled={loading}
-        >
-          {loading ? "Signing in…" : "Sign in"}
-        </button>
-        <button
-          type="button"
-          className="admin-back"
-          onClick={() => {
-            window.location.hash = "top";
-          }}
-        >
-          ← Back to website
-        </button>
+        <button className="admin-btn primary admin-login-submit" type="submit" disabled={loading}>{loading ? "Signing in…" : "Sign in"}</button>
+        <button type="button" className="admin-back" onClick={() => { window.location.hash = "top"; }}>← Back to website</button>
       </form>
     </div>
   );
@@ -160,36 +120,25 @@ function ImageManager({ product, update }) {
   const uploadImages = async (files) => {
     setUploadError("");
     if (!supabaseBrowser) {
-      setUploadError(
-        "Browser Supabase keys are missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to Vercel.",
-      );
+      setUploadError("Browser Supabase keys are missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to Vercel.");
       return;
     }
-    const selected = Array.from(files || []).filter((f) =>
-      f.type.startsWith("image/"),
-    );
+    const selected = Array.from(files || []).filter(f => f.type.startsWith("image/"));
     if (!selected.length) return;
     const slots = MAX_IMAGES - images.length;
     if (slots <= 0) {
-      setUploadError(
-        "This product already has 5 images. Remove one before uploading another.",
-      );
+      setUploadError("This product already has 5 images. Remove one before uploading another.");
       return;
     }
     const batch = selected.slice(0, slots);
-    if (selected.length > slots)
-      setUploadError(
-        `Only ${slots} image${slots === 1 ? "" : "s"} fit in the remaining slots.`,
-      );
+    if (selected.length > slots) setUploadError(`Only ${slots} image${slots === 1 ? "" : "s"} fit in the remaining slots.`);
 
     setUploading(true);
     try {
       const uploaded = [];
       for (const file of batch) {
         if (file.size > MAX_UPLOAD_BYTES) {
-          throw new Error(
-            `${file.name} is larger than 5 MB. Compress it to WebP/JPEG before uploading.`,
-          );
+          throw new Error(`${file.name} is larger than 5 MB. Compress it to WebP/JPEG before uploading.`);
         }
         const signRes = await fetch("/api/storage-upload-url", {
           method: "POST",
@@ -207,11 +156,7 @@ function ImageManager({ product, update }) {
         if (error) throw new Error(error.message);
         uploaded.push(signJson.publicUrl);
       }
-      update(
-        product.id,
-        "imageUrls",
-        [...images, ...uploaded].slice(0, MAX_IMAGES),
-      );
+      update(product.id, "imageUrls", [...images, ...uploaded].slice(0, MAX_IMAGES));
     } catch (error) {
       setUploadError(error.message || "Image upload failed.");
     } finally {
@@ -222,105 +167,55 @@ function ImageManager({ product, update }) {
   return (
     <div className="admin-images">
       <div className="admin-image-help">
-        <span>
-          <b>
-            {images.length}/{MAX_IMAGES}
-          </b>{" "}
-          images
-        </span>
-        <small>
-          Paste an existing public image URL or upload to DealKart Storage.
-        </small>
+        <span><b>{images.length}/{MAX_IMAGES}</b> images</span>
+        <small>Paste an existing public image URL or upload to DealKart Storage.</small>
       </div>
       <div className="admin-image-slots">
         {Array.from({ length: MAX_IMAGES }).map((_, i) => (
           <div className="admin-image-slot" key={i}>
             <div className="admin-image-slot-head">
               <b>Image {i + 1}</b>
-              {images[i] && (
-                <button
-                  type="button"
-                  onClick={() => removeImage(i)}
-                  aria-label={`Remove image ${i + 1}`}
-                >
-                  <X size={13} />
-                </button>
-              )}
+              {images[i] && <button type="button" onClick={() => removeImage(i)} aria-label={`Remove image ${i + 1}`}><X size={13}/></button>}
             </div>
             <div className="admin-url-input">
-              <LinkIcon size={14} />
+              <LinkIcon size={14}/>
               <input
                 value={images[i] || ""}
-                onChange={(e) => setImageAt(i, e.target.value)}
+                onChange={e => setImageAt(i, e.target.value)}
                 placeholder="https://example.com/product.webp"
                 type="url"
               />
             </div>
             {images[i] ? (
               <div className="admin-image-preview">
-                <img
-                  src={images[i]}
-                  alt={`Product view ${i + 1}`}
-                  onError={(e) => {
-                    e.currentTarget.dataset.error = "true";
-                  }}
-                />
+                <img src={images[i]} alt={`Product view ${i + 1}`} onError={e => { e.currentTarget.dataset.error = "true"; }} />
                 <span>Preview</span>
               </div>
             ) : (
-              <div className="admin-image-empty">
-                <ImagePlus size={18} />
-                <span>Paste URL above</span>
-              </div>
+              <div className="admin-image-empty"><ImagePlus size={18}/><span>Paste URL above</span></div>
             )}
           </div>
         ))}
       </div>
       <label className={`admin-upload-images ${uploading ? "disabled" : ""}`}>
-        <Upload size={16} />
-        {uploading ? "Uploading…" : "Upload images to Supabase Storage"}
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          disabled={uploading || images.length >= MAX_IMAGES}
-          onChange={(e) => {
-            uploadImages(e.target.files);
-            e.target.value = "";
-          }}
-        />
+        <Upload size={16}/>{uploading ? "Uploading…" : "Upload images to Supabase Storage"}
+        <input type="file" accept="image/*" multiple disabled={uploading || images.length >= MAX_IMAGES} onChange={e => { uploadImages(e.target.files); e.target.value = ""; }} />
       </label>
       {uploadError && <div className="admin-image-error">{uploadError}</div>}
-      <small className="admin-image-tip">
-        For the Free plan, keep images around 300–800 KB each when possible.
-        WebP is recommended.
-      </small>
+      <small className="admin-image-tip">For the Free plan, keep images around 300–800 KB each when possible. WebP is recommended.</small>
     </div>
   );
 }
 
 function snapshotProduct(p = {}) {
   return {
-    id: Number(p.id),
-    page: Number(p.page ?? p.id),
-    name: String(p.name ?? ""),
-    brand: String(p.brand ?? ""),
-    category: String(p.category ?? "All Deals"),
-    price: Number(p.price ?? 0),
-    mrp: Number(p.mrp ?? 0),
-    oldPrice: Number(p.oldPrice ?? 0),
-    discount: Number(p.discount ?? 0),
-    rating: Number(p.rating ?? 4.3),
-    reviews: String(p.reviews ?? "0"),
-    reviewCount: Number(p.reviewCount ?? 0),
-    image: String(p.image ?? ""),
-    imageUrls: getImages(p),
-    keyPoints: [...(p.keyPoints || p.specs || [])].slice(0, 4),
-    description: String(p.description ?? ""),
-    isTop10: Boolean(p.isTop10),
-    top10Rank: p.isTop10 ? Number(p.top10Rank) || null : null,
-    isActive: p.isActive !== false,
-    returnEligible: p.returnEligible !== false,
+    id: Number(p.id), page: Number(p.page ?? p.id), name: String(p.name ?? ""), brand: String(p.brand ?? ""),
+    category: String(p.category ?? "All Deals"), price: Number(p.price ?? 0), mrp: Number(p.mrp ?? 0),
+    oldPrice: Number(p.oldPrice ?? 0), discount: Number(p.discount ?? 0), rating: Number(p.rating ?? 4.3),
+    reviews: String(p.reviews ?? "0"), reviewCount: Number(p.reviewCount ?? 0), image: String(p.image ?? ""),
+    imageUrls: getImages(p), keyPoints: [...(p.keyPoints || p.specs || [])].slice(0, 4),
+    description: String(p.description ?? ""), isTop10: Boolean(p.isTop10), top10Rank: p.isTop10 ? Number(p.top10Rank) || null : null,
+    isActive: p.isActive !== false, returnEligible: p.returnEligible !== false,
   };
 }
 
@@ -328,8 +223,6 @@ export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [items, setItems] = useState(() => getInitialCatalog());
-  const [newProduct, setNewProduct] = useState(null);
-  const [addingProduct, setAddingProduct] = useState(false);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -339,22 +232,15 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (authenticated) {
-      fetchRemoteCatalog(getInitialCatalog())
-        .then((remote) => {
-          const ordered = [...remote].sort(
-            (a, b) => Number(a.id) - Number(b.id),
-          );
-          setItems(ordered);
-          originalRef.current = new Map(
-            ordered.map((p) => [Number(p.id), snapshotProduct(p)]),
-          );
-          deletedRef.current = new Set();
-        })
-        .finally(() => setLoadingCatalog(false));
+      fetchRemoteCatalog(getInitialCatalog()).then(remote => {
+        setItems(remote);
+        originalRef.current = new Map(remote.map(p => [Number(p.id), snapshotProduct(p)]));
+        deletedRef.current = new Set();
+      }).finally(() => setLoadingCatalog(false));
       setCheckingSession(false);
       return;
     }
-    checkAdminSession().then((ok) => {
+    checkAdminSession().then(ok => {
       if (ok) setAuthenticated(true);
       setCheckingSession(false);
     });
@@ -362,131 +248,39 @@ export default function AdminPage() {
 
   const visible = useMemo(() => {
     const q = query.toLowerCase().trim();
-    return q
-      ? items.filter((p) =>
-          `${p.name} ${p.brand} ${p.category}`.toLowerCase().includes(q),
-        )
-      : items;
+    return q ? items.filter(p => `${p.name} ${p.brand} ${p.category}`.toLowerCase().includes(q)) : items;
   }, [items, query]);
 
   const update = (id, key, value) =>
-    setItems((rows) =>
-      rows.map((p) => (p.id === id ? { ...p, [key]: value } : p)),
-    );
+    setItems(rows => rows.map(p => p.id === id ? { ...p, [key]: value } : p));
 
   const updatePoint = (id, index, value) =>
-    setItems((rows) =>
-      rows.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              keyPoints: [...(p.keyPoints || ["", "", "", ""])]
-                .slice(0, 4)
-                .map((x, i) => (i === index ? value : x)),
-            }
-          : p,
-      ),
-    );
+    setItems(rows => rows.map(p => p.id === id ? {
+      ...p,
+      keyPoints: [...(p.keyPoints || ["", "", "", ""])].slice(0, 4).map((x, i) => i === index ? value : x),
+    } : p));
 
-  const add = () => setNewProduct(blank());
-  const updateNewProduct = (key, value) =>
-    setNewProduct((product) => ({ ...product, [key]: value }));
-  const updateNewPoint = (index, value) =>
-    setNewProduct((product) => ({
-      ...product,
-      keyPoints: product.keyPoints.map((point, pointIndex) =>
-        pointIndex === index ? value : point,
-      ),
-    }));
-  const updateNewImage = (_id, key, value) => updateNewProduct(key, value);
-  const toggleNewTop10 = () => {
-    setNewProduct((product) => {
-      if (product.isTop10)
-        return { ...product, isTop10: false, top10Rank: null };
-      const selected = items.filter((item) => item.isTop10);
-      if (selected.length >= 10) {
-        alert(
-          "Today's Top 10 already has 10 products. Remove one before adding another.",
-        );
-        return product;
-      }
-      const used = new Set(
-        selected.map((item) => Number(item.top10Rank)).filter(Boolean),
-      );
-      const rank =
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].find((number) => !used.has(number)) ||
-        selected.length + 1;
-      return { ...product, isTop10: true, top10Rank: rank };
-    });
-  };
-
-  const saveNewProduct = async (event) => {
-    event.preventDefault();
-    if (!newProduct) return;
-    setAddingProduct(true);
-    const images = getImages(newProduct);
-    const product = {
-      ...newProduct,
-      name: newProduct.name.trim(),
-      brand: newProduct.brand.trim(),
-      category: newProduct.category.trim(),
-      price: Number(newProduct.price) || 0,
-      mrp: Number(newProduct.mrp) || Number(newProduct.price) || 0,
-      oldPrice: Number(newProduct.mrp) || Number(newProduct.price) || 0,
-      rating: Number(newProduct.rating) || 4.3,
-      reviews: String(newProduct.reviews || "0"),
-      image: images[0] || "",
-      imageUrls: images,
-      galleryImages: [],
-      specs: newProduct.keyPoints,
-      isActive: true,
-      returnEligible: newProduct.returnEligible !== false,
-      __imagesChanged: true,
-    };
-    try {
-      await saveCatalog([product]);
-      setItems((rows) => [...rows, product]);
-      originalRef.current.set(Number(product.id), snapshotProduct(product));
-      setNewProduct(null);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2200);
-    } catch (error) {
-      alert(`Could not add product: ${error.message}`);
-    } finally {
-      setAddingProduct(false);
-    }
-  };
-
+  const add = () => setItems(rows => [...rows, blank()]);
   const remove = (id) => {
-    setItems((rows) => rows.filter((p) => p.id !== id));
+    setItems(rows => rows.filter(p => p.id !== id));
     if (originalRef.current.has(Number(id))) deletedRef.current.add(Number(id));
   };
 
   const toggleTop10 = (id) => {
-    setItems((rows) => {
-      const current = rows.find((p) => p.id === id);
+    setItems(rows => {
+      const current = rows.find(p => p.id === id);
       if (!current) return rows;
       if (!current.isTop10) {
-        const selected = rows.filter((p) => p.isTop10);
+        const selected = rows.filter(p => p.isTop10);
         if (selected.length >= 10) {
-          alert(
-            "Today's Top 10 already has 10 products. Remove one before adding another.",
-          );
+          alert("Today's Top 10 already has 10 products. Remove one before adding another.");
           return rows;
         }
-        const used = new Set(
-          selected.map((p) => Number(p.top10Rank)).filter(Boolean),
-        );
-        const rank =
-          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].find((n) => !used.has(n)) ||
-          selected.length + 1;
-        return rows.map((p) =>
-          p.id === id ? { ...p, isTop10: true, top10Rank: rank } : p,
-        );
+        const used = new Set(selected.map(p => Number(p.top10Rank)).filter(Boolean));
+        const rank = [1,2,3,4,5,6,7,8,9,10].find(n => !used.has(n)) || selected.length + 1;
+        return rows.map(p => p.id === id ? { ...p, isTop10: true, top10Rank: rank } : p);
       }
-      return rows.map((p) =>
-        p.id === id ? { ...p, isTop10: false, top10Rank: null } : p,
-      );
+      return rows.map(p => p.id === id ? { ...p, isTop10: false, top10Rank: null } : p);
     });
   };
 
@@ -518,25 +312,15 @@ export default function AdminPage() {
         };
       });
 
-      const changed = cleaned
-        .filter((p) => {
-          const before = originalRef.current.get(Number(p.id));
-          return (
-            !before ||
-            JSON.stringify(snapshotProduct(p)) !== JSON.stringify(before)
-          );
-        })
-        .map((p) => {
-          const before = originalRef.current.get(Number(p.id));
-          const imagesChanged =
-            !before ||
-            JSON.stringify(getImages(p)) !==
-              JSON.stringify(before.imageUrls || []);
-          return { ...p, __imagesChanged: imagesChanged };
-        });
-      const deletedIds = [...deletedRef.current].filter(
-        (id) => !cleaned.some((p) => Number(p.id) === Number(id)),
-      );
+      const changed = cleaned.filter(p => {
+        const before = originalRef.current.get(Number(p.id));
+        return !before || JSON.stringify(snapshotProduct(p)) !== JSON.stringify(before);
+      }).map(p => {
+        const before = originalRef.current.get(Number(p.id));
+        const imagesChanged = !before || JSON.stringify(getImages(p)) !== JSON.stringify(before.imageUrls || []);
+        return { ...p, __imagesChanged: imagesChanged };
+      });
+      const deletedIds = [...deletedRef.current].filter(id => !cleaned.some(p => Number(p.id) === Number(id)));
 
       if (!changed.length && !deletedIds.length) {
         setSaved(true);
@@ -546,9 +330,7 @@ export default function AdminPage() {
 
       await saveCatalog(changed, deletedIds);
       setItems(cleaned);
-      originalRef.current = new Map(
-        cleaned.map((p) => [Number(p.id), snapshotProduct(p)]),
-      );
+      originalRef.current = new Map(cleaned.map(p => [Number(p.id), snapshotProduct(p)]));
       deletedRef.current = new Set();
       setSaved(true);
       setTimeout(() => setSaved(false), 2200);
@@ -560,445 +342,69 @@ export default function AdminPage() {
   };
 
   const exportCsv = () => {
-    const cols = [
-      "id",
-      "name",
-      "brand",
-      "category",
-      "price",
-      "mrp",
-      "discount",
-      "rating",
-      "reviews",
-      "imageUrls",
-      "description",
-      "keyPoints",
-      "isTop10",
-      "top10Rank",
-      "returnEligible",
-    ];
-    const csv = [
-      cols,
-      ...items.map((p) =>
-        cols.map((c) => (Array.isArray(p[c]) ? p[c].join(" | ") : p[c])),
-      ),
-    ]
-      .map((r) => r.map(csvEscape).join(","))
-      .join("\n");
+    const cols = ["id","name","brand","category","price","mrp","discount","rating","reviews","imageUrls","description","keyPoints","isTop10","top10Rank","returnEligible"];
+    const csv = [cols, ...items.map(p => cols.map(c => Array.isArray(p[c]) ? p[c].join(" | ") : p[c]))]
+      .map(r => r.map(csvEscape).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "dealkart-products.csv";
-    a.click();
-    URL.revokeObjectURL(a.href);
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "dealkart-products.csv"; a.click(); URL.revokeObjectURL(a.href);
   };
 
   const logout = async () => {
-    try {
-      await fetch("/api/admin-logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch {}
+    try { await fetch("/api/admin-logout", { method: "POST", credentials: "include" }); } catch {}
     setAuthenticated(false);
   };
 
-  if (checkingSession)
-    return (
-      <div className="admin-login">
-        <div className="admin-login-card">
-          <span className="kicker">DEALKART ADMIN</span>
-          <h1>Checking access…</h1>
-        </div>
-      </div>
-    );
+  if (checkingSession) return <div className="admin-login"><div className="admin-login-card"><span className="kicker">DEALKART ADMIN</span><h1>Checking access…</h1></div></div>;
   if (!authenticated) return <Login onLogin={() => setAuthenticated(true)} />;
 
   return (
     <div className="admin-page">
       <div className="admin-head">
         <div>
-          <button
-            className="admin-back"
-            onClick={() => {
-              window.location.hash = "top";
-            }}
-          >
-            <ArrowLeft size={16} /> Website
-          </button>
+          <button className="admin-back" onClick={() => { window.location.hash = "top"; }}><ArrowLeft size={16}/> Website</button>
           <span className="kicker">DEALKART CATALOG</span>
           <h1>Product Manager</h1>
-          <p>
-            All product text lives in PostgreSQL. Up to 5 image URLs are stored
-            separately in the product image table, with optional uploads to
-            Supabase Storage.
-          </p>
+          <p>All product text lives in PostgreSQL. Up to 5 image URLs are stored separately in the product image table, with optional uploads to Supabase Storage.</p>
         </div>
         <div className="admin-actions">
-          <button className="admin-btn secondary" onClick={logout}>
-            <LogOut size={16} /> Log out
-          </button>
-          <button className="admin-btn secondary" onClick={exportCsv}>
-            <Download size={16} /> Export CSV
-          </button>
-          <button
-            className="admin-btn primary"
-            onClick={save}
-            disabled={saving}
-          >
-            {saving ? "Saving…" : saved ? "Saved!" : "Save catalog"}
-          </button>
+          <button className="admin-btn secondary" onClick={logout}><LogOut size={16}/> Log out</button>
+          <button className="admin-btn secondary" onClick={exportCsv}><Download size={16}/> Export CSV</button>
+          <button className="admin-btn primary" onClick={save} disabled={saving}>{saving ? "Saving…" : saved ? "Saved!" : "Save catalog"}</button>
         </div>
       </div>
 
       <div className="admin-toolbar">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search products, brand or category…"
-        />
-        <span>
-          {loadingCatalog
-            ? "Loading…"
-            : `${items.length} items · ${items.filter((p) => p.isTop10).length}/10 top deals`}
-        </span>
-        <button className="admin-btn primary" onClick={add}>
-          <Plus size={16} /> Add product
-        </button>
+        <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search products, brand or category…" />
+        <span>{loadingCatalog ? "Loading…" : `${items.length} items · ${items.filter(p => p.isTop10).length}/10 top deals`}</span>
+        <button className="admin-btn primary" onClick={add}><Plus size={16}/> Add product</button>
       </div>
 
       <div className="admin-cards">
         {visible.map((p, rowIndex) => (
-          <section
-            className={`admin-product-card ${p.isTop10 ? "featured" : ""}`}
-            key={p.id}
-          >
+          <section className={`admin-product-card ${p.isTop10 ? "featured" : ""}`} key={p.id}>
             <div className="admin-product-title">
-              <div>
-                <span className="admin-row-number">#{rowIndex + 1}</span>
-                <h2>{p.name || "New product"}</h2>
-              </div>
-              <button
-                className="delete-row"
-                title="Remove product"
-                onClick={() => remove(p.id)}
-              >
-                <Trash2 size={17} />
-              </button>
+              <div><span className="admin-row-number">#{rowIndex + 1}</span><h2>{p.name || "New product"}</h2></div>
+              <button className="delete-row" title="Remove product" onClick={() => remove(p.id)}><Trash2 size={17}/></button>
             </div>
             <div className="admin-form-grid">
-              <label>
-                Product name
-                <input
-                  value={p.name || ""}
-                  onChange={(e) => update(p.id, "name", e.target.value)}
-                />
-              </label>
-              <label>
-                Brand
-                <input
-                  value={p.brand || ""}
-                  onChange={(e) => update(p.id, "brand", e.target.value)}
-                />
-              </label>
-              <label>
-                Category
-                <input
-                  value={p.category || ""}
-                  onChange={(e) => update(p.id, "category", e.target.value)}
-                />
-              </label>
-              <label>
-                MRP
-                <input
-                  type="number"
-                  value={p.mrp ?? ""}
-                  onChange={(e) => update(p.id, "mrp", e.target.value)}
-                />
-              </label>
-              <label>
-                My price
-                <input
-                  type="number"
-                  value={p.price ?? ""}
-                  onChange={(e) => update(p.id, "price", e.target.value)}
-                />
-              </label>
-              <label>
-                Rating
-                <input
-                  type="number"
-                  min="0"
-                  max="5"
-                  step="0.1"
-                  value={p.rating ?? ""}
-                  onChange={(e) => update(p.id, "rating", e.target.value)}
-                />
-              </label>
-              <label>
-                Reviews
-                <input
-                  value={p.reviews ?? ""}
-                  onChange={(e) => update(p.id, "reviews", e.target.value)}
-                />
-              </label>
-              <label className="admin-top-toggle">
-                <span>Today's Top 10</span>
-                <button
-                  type="button"
-                  className={p.isTop10 ? "on" : ""}
-                  onClick={() => toggleTop10(p.id)}
-                >
-                  {p.isTop10
-                    ? `✓ Top 10 #${p.top10Rank || ""}`
-                    : "Add to Top 10"}
-                </button>
-              </label>
-              <label className="admin-top-toggle">
-                <span>Return policy</span>
-                <button
-                  type="button"
-                  className={p.returnEligible !== false ? "on" : ""}
-                  onClick={() =>
-                    update(p.id, "returnEligible", p.returnEligible === false)
-                  }
-                >
-                  {p.returnEligible !== false
-                    ? "✓ 72-hour return"
-                    : "* No Return"}
-                </button>
-              </label>
-              <label className="admin-wide">
-                Description
-                <textarea
-                  value={p.description || ""}
-                  onChange={(e) => update(p.id, "description", e.target.value)}
-                />
-              </label>
-              <div className="admin-wide">
-                <div className="admin-field-title">4 Key points</div>
-                <div className="admin-points">
-                  {[0, 1, 2, 3].map((i) => (
-                    <input
-                      key={i}
-                      placeholder={`Key point ${i + 1}`}
-                      value={(p.keyPoints || p.specs || [])[i] || ""}
-                      onChange={(e) => updatePoint(p.id, i, e.target.value)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="admin-wide">
-                <div className="admin-field-title">
-                  Product images — maximum 5
-                </div>
-                <ImageManager product={p} update={update} />
-              </div>
+              <label>Product name<input value={p.name || ""} onChange={e => update(p.id,"name",e.target.value)} /></label>
+              <label>Brand<input value={p.brand || ""} onChange={e => update(p.id,"brand",e.target.value)} /></label>
+              <label>Category<input value={p.category || ""} onChange={e => update(p.id,"category",e.target.value)} /></label>
+              <label>MRP<input type="number" value={p.mrp ?? ""} onChange={e => update(p.id,"mrp",e.target.value)} /></label>
+              <label>My price<input type="number" value={p.price ?? ""} onChange={e => update(p.id,"price",e.target.value)} /></label>
+              <label>Rating<input type="number" min="0" max="5" step="0.1" value={p.rating ?? ""} onChange={e => update(p.id,"rating",e.target.value)} /></label>
+              <label>Reviews<input value={p.reviews ?? ""} onChange={e => update(p.id,"reviews",e.target.value)} /></label>
+              <label className="admin-top-toggle"><span>Today's Top 10</span><button type="button" className={p.isTop10 ? "on" : ""} onClick={() => toggleTop10(p.id)}>{p.isTop10 ? `✓ Top 10 #${p.top10Rank || ""}` : "Add to Top 10"}</button></label>
+              <label className="admin-top-toggle"><span>Return policy</span><button type="button" className={p.returnEligible !== false ? "on" : ""} onClick={() => update(p.id, "returnEligible", p.returnEligible === false)}>{p.returnEligible !== false ? "✓ 72-hour return" : "* No Return"}</button></label>
+              <label className="admin-wide">Description<textarea value={p.description || ""} onChange={e => update(p.id,"description",e.target.value)} /></label>
+              <div className="admin-wide"><div className="admin-field-title">4 Key points</div><div className="admin-points">{[0,1,2,3].map(i => <input key={i} placeholder={`Key point ${i+1}`} value={(p.keyPoints || p.specs || [])[i] || ""} onChange={e => updatePoint(p.id,i,e.target.value)} />)}</div></div>
+              <div className="admin-wide"><div className="admin-field-title">Product images — maximum 5</div><ImageManager product={p} update={update}/></div>
             </div>
           </section>
         ))}
       </div>
-      {!visible.length && (
-        <div className="admin-empty">No products match your search.</div>
-      )}
-      <div className="admin-note">
-        <b>Recommended:</b> use WebP images around 300–800 KB. You can paste any
-        public image URL, or upload directly to the <code>product-images</code>{" "}
-        Supabase Storage bucket. Changes are global after <b>Save catalog</b>.
-      </div>
-
-      {newProduct && (
-        <div
-          className="admin-modal-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setNewProduct(null);
-          }}
-        >
-          <form className="admin-add-modal" onSubmit={saveNewProduct}>
-            <div className="admin-modal-head">
-              <div>
-                <span className="kicker">NEW CATALOG ITEM</span>
-                <h2>Add product</h2>
-                <p>
-                  Enter the product details, then save it to the live catalog.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="admin-modal-close"
-                onClick={() => setNewProduct(null)}
-                aria-label="Close add product form"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="admin-add-grid">
-              <label>
-                Product name
-                <input
-                  autoFocus
-                  required
-                  value={newProduct.name}
-                  onChange={(event) =>
-                    updateNewProduct("name", event.target.value)
-                  }
-                  placeholder="e.g. Wireless headphones"
-                />
-              </label>
-              <label>
-                Brand
-                <input
-                  required
-                  value={newProduct.brand}
-                  onChange={(event) =>
-                    updateNewProduct("brand", event.target.value)
-                  }
-                  placeholder="Brand name"
-                />
-              </label>
-              <label>
-                Category
-                <input
-                  required
-                  value={newProduct.category}
-                  onChange={(event) =>
-                    updateNewProduct("category", event.target.value)
-                  }
-                  placeholder="Electronics"
-                />
-              </label>
-              <label>
-                My price
-                <input
-                  required
-                  min="0"
-                  step="0.01"
-                  type="number"
-                  value={newProduct.price}
-                  onChange={(event) =>
-                    updateNewProduct("price", event.target.value)
-                  }
-                />
-              </label>
-              <label>
-                MRP
-                <input
-                  required
-                  min="0"
-                  step="0.01"
-                  type="number"
-                  value={newProduct.mrp}
-                  onChange={(event) =>
-                    updateNewProduct("mrp", event.target.value)
-                  }
-                />
-              </label>
-              <label>
-                Rating
-                <input
-                  min="0"
-                  max="5"
-                  step="0.1"
-                  type="number"
-                  value={newProduct.rating}
-                  onChange={(event) =>
-                    updateNewProduct("rating", event.target.value)
-                  }
-                />
-              </label>
-              <label>
-                Reviews
-                <input
-                  min="0"
-                  type="number"
-                  value={newProduct.reviews}
-                  onChange={(event) =>
-                    updateNewProduct("reviews", event.target.value)
-                  }
-                />
-              </label>
-              <label>
-                Today's Top 10
-                <button
-                  type="button"
-                  className={`admin-add-toggle ${newProduct.isTop10 ? "on" : ""}`}
-                  onClick={toggleNewTop10}
-                >
-                  {newProduct.isTop10
-                    ? `✓ Top 10 #${newProduct.top10Rank || ""}`
-                    : "Add to Top 10"}
-                </button>
-              </label>
-              <label>
-                Return policy
-                <button
-                  type="button"
-                  className={`admin-add-toggle ${newProduct.returnEligible !== false ? "on" : ""}`}
-                  onClick={() =>
-                    updateNewProduct(
-                      "returnEligible",
-                      newProduct.returnEligible === false,
-                    )
-                  }
-                >
-                  {newProduct.returnEligible !== false
-                    ? "✓ 72-hour return"
-                    : "* No Return"}
-                </button>
-              </label>
-              <label className="admin-add-wide">
-                Description
-                <textarea
-                  value={newProduct.description}
-                  onChange={(event) =>
-                    updateNewProduct("description", event.target.value)
-                  }
-                  placeholder="Short product description"
-                />
-              </label>
-              <div className="admin-add-wide">
-                <div className="admin-field-title">Key points</div>
-                <div className="admin-points">
-                  {newProduct.keyPoints.map((point, index) => (
-                    <input
-                      key={index}
-                      placeholder={`Key point ${index + 1}`}
-                      value={point}
-                      onChange={(event) =>
-                        updateNewPoint(index, event.target.value)
-                      }
-                    />
-                  ))}
-                </div>
-              </div>
-              <div className="admin-add-wide">
-                <div className="admin-field-title">
-                  Product images — maximum 5
-                </div>
-                <ImageManager product={newProduct} update={updateNewImage} />
-              </div>
-            </div>
-            <div className="admin-modal-foot">
-              <button
-                type="button"
-                className="admin-btn secondary"
-                onClick={() => setNewProduct(null)}
-              >
-                Cancel
-              </button>
-              <button
-                className="admin-btn primary"
-                type="submit"
-                disabled={addingProduct}
-              >
-                <Save size={16} />
-                {addingProduct ? "Saving…" : "Save product"}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {!visible.length && <div className="admin-empty">No products match your search.</div>}
+      <div className="admin-note"><b>Recommended:</b> use WebP images around 300–800 KB. You can paste any public image URL, or upload directly to the <code>product-images</code> Supabase Storage bucket. Changes are global after <b>Save catalog</b>.</div>
     </div>
   );
 }
