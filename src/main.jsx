@@ -33,132 +33,17 @@ import { Component, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import AdminPage from "./AdminPage";
 import dealkartSymbol from "./assets/dealkart-symbol.png";
-import heroGym from "./assets/hero-posters/fitness-home-gym.png";
-import heroFitness from "./assets/hero-posters/fitness-stronger.png";
-import heroFood from "./assets/hero-posters/food-clean-green.png";
+import heroFood from "./assets/hero-posters/image  4.png";
+import heroGym from "./assets/hero-posters/image 1.png";
+import heroFitness from "./assets/hero-posters/image 3.png";
+import heroWellness from "./assets/hero-posters/image5.png";
 import heroStock from "./assets/hero-posters/stock-up-days.png";
-import heroWellness from "./assets/hero-posters/wellness-balance.png";
 import { fetchRemoteCatalog, getInitialCatalog } from "./catalogStore";
 import "./styles.css";
 
 const WHATSAPP_NUMBER = "919244335428";
 const SUPPORT_PHONE = "9244335428";
 const SUPPORT_EMAIL = "mysterioofficial26@gmail.com";
-const SITE_URL = "https://dealkart-flax.vercel.app";
-const SITE_NAME = "DealKart";
-
-function getProductIdFromPath() {
-  const match = window.location.pathname.match(/^\/product\/(\d+)\/?$/);
-  return match ? Number(match[1]) : null;
-}
-
-function setMeta(nameOrProperty, content, isProperty = false) {
-  const attr = isProperty ? "property" : "name";
-  let el = document.head.querySelector(`meta[${attr}="${nameOrProperty}"]`);
-  if (!el) {
-    el = document.createElement("meta");
-    el.setAttribute(attr, nameOrProperty);
-    document.head.appendChild(el);
-  }
-  el.setAttribute("content", content);
-}
-
-function setCanonical(url) {
-  let el = document.head.querySelector('link[rel="canonical"]');
-  if (!el) {
-    el = document.createElement("link");
-    el.rel = "canonical";
-    document.head.appendChild(el);
-  }
-  el.href = url;
-}
-
-function updateSeo(page, product = null) {
-  const cleanPath = product ? `/product/${product.id}` : page === "special" ? "/deals" : "/";
-  const canonical = `${SITE_URL}${cleanPath}`;
-  let title = "DealKart – Best Deals & Online Shopping in India";
-  let description = "DealKart is an Indian online shopping platform for genuine products, daily deals, electronics, fashion, fitness, food, fragrance and personal care at competitive prices.";
-
-  if (page === "special") {
-    title = "Today's Best Deals – DealKart India";
-    description = "Explore DealKart's hand-picked daily deals, featured offers and competitive prices across popular product categories.";
-  }
-  if (product) {
-    title = `${product.name} – Buy Online | DealKart`;
-    description = `${product.name} by ${product.brand || "DealKart"}. Shop this product on DealKart with competitive pricing, Pan India delivery and simple WhatsApp ordering.`;
-  }
-
-  document.title = title;
-  setMeta("description", description);
-  setMeta("robots", "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1");
-  setCanonical(canonical);
-  setMeta("og:type", product ? "product" : "website", true);
-  setMeta("og:site_name", SITE_NAME, true);
-  setMeta("og:title", title, true);
-  setMeta("og:description", description, true);
-  setMeta("og:url", canonical, true);
-  setMeta("og:image", product?.image || `${SITE_URL}/dealkart-logo.png`, true);
-  setMeta("twitter:card", "summary_large_image");
-  setMeta("twitter:title", title);
-  setMeta("twitter:description", description);
-  setMeta("twitter:image", product?.image || `${SITE_URL}/dealkart-logo.png`);
-
-  let script = document.getElementById("dealkart-seo-jsonld");
-  if (!script) {
-    script = document.createElement("script");
-    script.id = "dealkart-seo-jsonld";
-    script.type = "application/ld+json";
-    document.head.appendChild(script);
-  }
-
-  const graph = [
-    {
-      "@type": "Organization",
-      "@id": `${SITE_URL}/#organization`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      logo: `${SITE_URL}/dealkart-logo.png`,
-    },
-    {
-      "@type": "WebSite",
-      "@id": `${SITE_URL}/#website`,
-      name: SITE_NAME,
-      url: SITE_URL,
-      publisher: { "@id": `${SITE_URL}/#organization` },
-      inLanguage: "en-IN",
-    },
-  ];
-
-  if (product) {
-    const productSchema = {
-      "@type": "Product",
-      "@id": `${canonical}#product`,
-      name: product.name,
-      description: product.description || description,
-      image: [product.image, ...(product.imageUrls || [])].filter(Boolean).slice(0, 5),
-      brand: { "@type": "Brand", name: product.brand || SITE_NAME },
-      offers: {
-        "@type": "Offer",
-        url: canonical,
-        priceCurrency: "INR",
-        price: String(product.price),
-        availability: "https://schema.org/InStock",
-        seller: { "@id": `${SITE_URL}/#organization` },
-      },
-    };
-    if (Number(product.rating) > 0 && Number(product.reviewCount || 0) > 0) {
-      productSchema.aggregateRating = {
-        "@type": "AggregateRating",
-        ratingValue: String(product.rating),
-        reviewCount: String(product.reviewCount),
-      };
-    }
-    graph.push(productSchema);
-  }
-
-  script.textContent = JSON.stringify({ "@context": "https://schema.org", "@graph": graph });
-}
-
 const categories = [
   "All Deals",
   "Skincare",
@@ -190,6 +75,9 @@ const heroSlides = [
   { image: heroFood, alt: "Clean food and healthy essentials deals" },
 ];
 const money = (n) => (n ? `₹${n.toLocaleString("en-IN")}` : "");
+const WHATSAPP_HELP_MESSAGE =
+  "Hi DealKart, I need help regarding my order or product info.";
+const WHATSAPP_HELP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_HELP_MESSAGE)}`;
 const productGalleryImages = import.meta.glob(
   "./assets/product-gallery/product-*-view*.jpg",
   {
@@ -403,7 +291,7 @@ function Header({
               {x}
             </a>
           ))}
-          <a className="nav-special" href="/deals">
+          <a className="nav-special" href="#todays-special">
             <Sparkles size={12} /> Today's Special
           </a>
           <span className="nav-trust">
@@ -430,10 +318,6 @@ function Hero({ slide, setSlide, onExplore }) {
       <div className="hero-frame">
         <div className="hero-live">
           <span /> LIVE DEALS
-        </div>
-        <div className="hero-seo-copy">
-          <h1>DealKart – Best Deals & Online Shopping in India</h1>
-          <p>Genuine products, daily deals and competitive prices across India.</p>
         </div>
         <button className="hero-explore" onClick={onExplore}>
           Explore deals <ArrowRight size={15} />
@@ -502,7 +386,7 @@ function Trust() {
     </section>
   );
 }
-function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen }) {
+function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, onBuyNow }) {
   return (
     <article
       className="card reveal"
@@ -580,11 +464,7 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen }) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(
-                  waUrl([{ p, qty: 1 }]),
-                  "_blank",
-                  "noopener,noreferrer",
-                );
+                onBuyNow(p);
               }}
             >
               <MessageCircle size={14} /> Buy now
@@ -632,7 +512,7 @@ function productHasReturn(p) {
   return Boolean(value);
 }
 
-function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
+function Modal({ p, onClose, onAdd, onWish, wished, onSeen, onBuyNow }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   useEffect(() => setImageIndex(0), [p?.id]);
@@ -762,15 +642,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
             <button onClick={() => onAdd(p)}>
               <ShoppingCart size={17} /> Add to cart
             </button>
-            <button
-              onClick={() =>
-                window.open(
-                  waUrl([{ p, qty: 1 }]),
-                  "_blank",
-                  "noopener,noreferrer",
-                )
-              }
-            >
+            <button onClick={() => onBuyNow(p)}>
               <MessageCircle size={17} /> Buy on WhatsApp
             </button>
           </div>
@@ -1282,6 +1154,7 @@ function Checkout({
   couponInfo = { code: "", discount: 0 },
 }) {
   const [f, setF] = useState({ name: "", phone: "", address: "", pincode: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     if (open) {
       try {
@@ -1291,6 +1164,9 @@ function Checkout({
         if (saved) setF(saved);
       } catch {}
     }
+  }, [open]);
+  useEffect(() => {
+    if (!open) setIsSubmitting(false);
   }, [open]);
   useEffect(() => {
     try {
@@ -1305,6 +1181,12 @@ function Checkout({
     /^\d{10}$/.test(f.phone.trim()) &&
     /^\d{6}$/.test(f.pincode.trim()) &&
     f.address.trim();
+  const whatsappUrl = ok ? waUrl(items, f, couponInfo) : "";
+  const continueToWhatsApp = () => {
+    if (!ok || isSubmitting) return;
+    setIsSubmitting(true);
+    window.location.assign(whatsappUrl);
+  };
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="checkout" onClick={(e) => e.stopPropagation()}>
@@ -1370,17 +1252,14 @@ function Checkout({
           </span>
           <b>{money(orderTotal)}</b>
         </div>
-        <a
-          className={"checkout-btn " + (!ok ? "disabled" : "")}
-          href={ok ? waUrl(items, f, couponInfo) : undefined}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => {
-            if (!ok) e.preventDefault();
-          }}
+        <button
+          type="button"
+          className={"checkout-btn " + (!ok || isSubmitting ? "disabled" : "")}
+          disabled={!ok || isSubmitting}
+          onClick={continueToWhatsApp}
         >
           <MessageCircle size={18} /> Continue to WhatsApp
-        </a>
+        </button>
         <div className="checkout-note">
           <ShieldCheck size={14} /> Your details are only used to prepare your
           WhatsApp order message.
@@ -1441,7 +1320,7 @@ function Footer({ setInfo, wishCount, onWishlist }) {
           <b>Shop</b>
           <a href="#products">All deals</a>
           <a href="#products">Best sellers</a>
-          <a href="/deals">Today's Special</a>
+          <a href="#todays-special">Today's Special</a>
           <a href="#products">Top picks</a>
         </div>
         <div className="footer-col">
@@ -1480,7 +1359,15 @@ function Footer({ setInfo, wishCount, onWishlist }) {
     </footer>
   );
 }
-function SpecialDealsPage({ onOpen, onAdd, onWish, wished, onSeen, onBack }) {
+function SpecialDealsPage({
+  onOpen,
+  onAdd,
+  onWish,
+  wished,
+  onSeen,
+  onBuyNow,
+  onBack,
+}) {
   return (
     <main className="special-page">
       <section className="special-hero reveal">
@@ -1541,6 +1428,7 @@ function SpecialDealsPage({ onOpen, onAdd, onWish, wished, onSeen, onBack }) {
                 onWish={onWish}
                 wished={wished(p)}
                 onSeen={onSeen}
+                onBuyNow={onBuyNow}
               />
             </div>
           ))}
@@ -1597,81 +1485,36 @@ function App() {
   const [q, setQ] = useState("");
   const [page, setPage] = useState(() => {
     if (window.location.hash === "#admin") return "admin";
-    if (window.location.pathname === "/deals" || window.location.hash === "#todays-special") return "special";
+    if (window.location.hash === "#todays-special") return "special";
     return "home";
   });
   const [category, setCategory] = useState("All Deals");
   const [selected, setSelected] = useState(null);
-  useEffect(() => {
-    if (catalogStatus !== "ready") return;
-    const productId = getProductIdFromPath();
-    const product = productId
-      ? products.find((p) => Number(p.id) === productId)
-      : null;
-    if (productId && product) setSelected(product);
-    else if (productId && !product) {
-      window.history.replaceState({}, "", "/");
-      setSelected(null);
-    }
-  }, [catalogStatus, catalogVersion]);
-
-  useEffect(() => {
-    if (page === "admin") return;
-    const product =
-      selected && window.location.pathname.startsWith("/product/")
-        ? selected
-        : null;
-    updateSeo(page, product);
-  }, [page, selected]);
   const [cart, setCart] = useState([]);
   const [wish, setWish] = useState([]);
   const [recent, setRecent] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [checkout, setCheckout] = useState(false);
+  const [checkoutItems, setCheckoutItems] = useState([]);
+  const [checkoutCouponInfo, setCheckoutCouponInfo] = useState({
+    code: "",
+    discount: 0,
+  });
   const [info, setInfo] = useState(null);
   const [slide, setSlide] = useState(0);
   const [hidden, setHidden] = useState(false);
   const [toast, setToast] = useState("");
   const [couponInfo, setCouponInfo] = useState({ code: "", discount: 0 });
   useEffect(() => {
-    const syncRoute = () => {
-      if (window.location.hash === "#admin") {
-        setPage("admin");
-        return;
-      }
-      const productId = getProductIdFromPath();
-      if (!productId) setSelected(null);
-      setPage(
-        window.location.pathname === "/deals" || window.location.hash === "#todays-special"
-          ? "special"
-          : "home",
-      );
+    const onHash = () => {
+      if (window.location.hash === "#admin") setPage("admin");
+      else if (window.location.hash === "#todays-special") setPage("special");
+      else setPage("home");
     };
-    window.addEventListener("hashchange", syncRoute);
-    window.addEventListener("popstate", syncRoute);
-    syncRoute();
-    return () => {
-      window.removeEventListener("hashchange", syncRoute);
-      window.removeEventListener("popstate", syncRoute);
-    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
   }, []);
-
-  const openProduct = (p) => {
-    setSelected(p);
-    if (window.location.pathname !== `/product/${p.id}`) {
-      window.history.pushState({ productId: p.id }, "", `/product/${p.id}`);
-    }
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const closeProduct = () => {
-    setSelected(null);
-    if (window.location.pathname.startsWith("/product/")) {
-      window.history.pushState({}, "", "/");
-      setPage("home");
-    }
-  };
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem("dealkart-theme") || "light";
@@ -1795,6 +1638,18 @@ function App() {
   };
   const seen = (p) =>
     setRecent((r) => [p, ...r.filter((x) => x.id !== p.id)].slice(0, 4));
+  const openCheckout = (items, promo = { code: "", discount: 0 }) => {
+    if (!Array.isArray(items) || !items.length) return;
+    setCheckoutItems(items);
+    setCheckoutCouponInfo({
+      code: promo.code || promo.coupon || "",
+      discount: Number(promo.discount) || 0,
+    });
+    setCheckout(true);
+  };
+  const buyNow = (p, qty = 1) => {
+    openCheckout([{ p, qty }]);
+  };
   const scrollProducts = () =>
     document
       .getElementById("products")
@@ -1862,15 +1717,14 @@ function App() {
       />
       {page === "special" ? (
         <SpecialDealsPage
-          onOpen={openProduct}
+          onOpen={setSelected}
           onAdd={add}
           onWish={toggleWish}
           wished={(p) => wish.some((x) => x.id === p.id)}
           onSeen={seen}
+          onBuyNow={buyNow}
           onBack={() => {
-            window.history.pushState({}, "", "/");
-            window.dispatchEvent(new PopStateEvent("popstate"));
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            window.location.hash = "top";
           }}
         />
       ) : (
@@ -1888,7 +1742,7 @@ function App() {
                 </h2>
                 <p>10 handpicked offers specially selected for today.</p>
               </div>
-              <a className="view-special" href="/deals">
+              <a className="view-special" href="#todays-special">
                 View all 10 <ArrowRight size={15} />
               </a>
             </div>
@@ -1898,11 +1752,12 @@ function App() {
                   <span className="deal-rank">#{index + 1}</span>
                   <ProductCard
                     p={p}
-                    onOpen={openProduct}
+                    onOpen={setSelected}
                     onAdd={add}
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
+                    onBuyNow={buyNow}
                   />
                 </div>
               ))}
@@ -1951,11 +1806,12 @@ function App() {
                   <ProductCard
                     key={p.id}
                     p={p}
-                    onOpen={openProduct}
+                    onOpen={setSelected}
                     onAdd={add}
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
+                    onBuyNow={buyNow}
                   />
                 ))}
               </div>
@@ -1979,7 +1835,7 @@ function App() {
             items={recent}
             onOpen={(p) => {
               seen(p);
-              openProduct(p);
+              setSelected(p);
             }}
           />
           <section className="wa-banner reveal">
@@ -2002,9 +1858,14 @@ function App() {
                 </span>
               </div>
             </div>
-            <button onClick={() => setCheckout(true)}>
+            <a
+              href={WHATSAPP_HELP_URL}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Order on WhatsApp"
+            >
               <MessageCircle size={18} /> Order on WhatsApp
-            </button>
+            </a>
           </section>
           <section className="about-strip reveal">
             <div>
@@ -2043,7 +1904,7 @@ function App() {
       />
       <a
         className="floating-support"
-        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi DealKart, I need help 👋")}`}
+        href={WHATSAPP_HELP_URL}
         target="_blank"
         rel="noreferrer"
         aria-label="Contact DealKart on WhatsApp"
@@ -2053,11 +1914,12 @@ function App() {
       </a>
       <Modal
         p={selected}
-        onClose={closeProduct}
+        onClose={() => setSelected(null)}
         onAdd={add}
         onWish={toggleWish}
         wished={selected ? wish.some((x) => x.id === selected.id) : false}
         onSeen={seen}
+        onBuyNow={buyNow}
       />
       <Wishlist
         open={wishlistOpen}
@@ -2066,7 +1928,7 @@ function App() {
         onOpen={(p) => {
           seen(p);
           setWishlistOpen(false);
-          openProduct(p);
+          setSelected(p);
         }}
         onAdd={add}
         onWish={toggleWish}
@@ -2078,21 +1940,24 @@ function App() {
         onChange={change}
         onRemove={remove}
         onCheckout={(promo = { coupon: "", discount: 0 }) => {
-          setCouponInfo({
+          setCartOpen(false);
+          setCheckoutItems(cart);
+          setCheckoutCouponInfo({
             code: promo.coupon || "",
             discount: promo.discount || 0,
           });
-          setCartOpen(false);
           setCheckout(true);
         }}
       />
       <Checkout
         open={checkout}
-        onClose={() => setCheckout(false)}
-        items={
-          cart.length ? cart : products.slice(0, 1).map((p) => ({ p, qty: 1 }))
-        }
-        couponInfo={couponInfo}
+        onClose={() => {
+          setCheckout(false);
+          setCheckoutItems([]);
+          setCheckoutCouponInfo({ code: "", discount: 0 });
+        }}
+        items={checkoutItems.length ? checkoutItems : cart}
+        couponInfo={checkoutCouponInfo}
       />
       <InfoModal type={info} onClose={() => setInfo(null)} />
       {toast && (
