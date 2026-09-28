@@ -9,12 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "latest",
     "@vitejs/plugin-react": "latest",
-    "dealkart-combined": "file:../../../../OneDrive/Desktop/DealKart-professionalized/final",
-    "lucide-react": "latest",
+    "vite": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "vite": "latest"
-  }
+    "lucide-react": "latest",
+    "@supabase/supabase-js": "latest"
+  },
+  "devDependencies": {}
 }

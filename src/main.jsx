@@ -33,11 +33,11 @@ import { Component, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import AdminPage from "./AdminPage";
 import dealkartSymbol from "./assets/dealkart-symbol.png";
-import heroGym from "./assets/hero-posters/fitness-home-gym.png";
-import heroFitness from "./assets/hero-posters/fitness-stronger.png";
-import heroFood from "./assets/hero-posters/food-clean-green.png";
+import heroFood from "./assets/hero-posters/image  4.png";
+import heroGym from "./assets/hero-posters/image 1.png";
+import heroFitness from "./assets/hero-posters/image 3.png";
+import heroWellness from "./assets/hero-posters/image5.png";
 import heroStock from "./assets/hero-posters/stock-up-days.png";
-import heroWellness from "./assets/hero-posters/wellness-balance.png";
 import { fetchRemoteCatalog, getInitialCatalog } from "./catalogStore";
 import "./styles.css";
 
@@ -75,56 +75,9 @@ const heroSlides = [
   { image: heroFood, alt: "Clean food and healthy essentials deals" },
 ];
 const money = (n) => (n ? `₹${n.toLocaleString("en-IN")}` : "");
-const SITE_URL = "https://dealkart-flax.vercel.app/";
-const DEFAULT_META_DESCRIPTION =
-  "DealKart — curated deals on skincare, electronics, fashion, fitness, food, fragrance and personal care with simple WhatsApp ordering across India.";
-
-function setMeta(name, content, attribute = "name") {
-  let el = document.head.querySelector(`meta[${attribute}="${name}"]`);
-  if (!el) {
-    el = document.createElement("meta");
-    el.setAttribute(attribute, name);
-    document.head.appendChild(el);
-  }
-  el.setAttribute("content", content);
-}
-
-function updateSeo({ title, description = DEFAULT_META_DESCRIPTION }) {
-  document.title = title;
-  setMeta("description", description);
-  setMeta("og:title", title, "property");
-  setMeta("og:description", description, "property");
-  setMeta("twitter:title", title);
-  setMeta("twitter:description", description);
-}
-
-function upsertJsonLd(id, data) {
-  let script = document.head.querySelector(`script[data-dealkart-schema="${id}"]`);
-  if (!script) {
-    script = document.createElement("script");
-    script.type = "application/ld+json";
-    script.dataset.dealkartSchema = id;
-    document.head.appendChild(script);
-  }
-  script.textContent = JSON.stringify(data);
-}
-
-function safeStorageGet(key, fallback = null) {
-  try {
-    const value = localStorage.getItem(key);
-    return value === null ? fallback : value;
-  } catch {
-    return fallback;
-  }
-}
-
-function safeStorageSet(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Storage can be blocked in private/restricted browser contexts.
-  }
-}
+const WHATSAPP_HELP_MESSAGE =
+  "Hi DealKart, I need help regarding my order or product info.";
+const WHATSAPP_HELP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_HELP_MESSAGE)}`;
 const productGalleryImages = import.meta.glob(
   "./assets/product-gallery/product-*-view*.jpg",
   {
@@ -296,14 +249,14 @@ function Header({
                 <b>India</b>
               </span>
             </div>
-            <button type="button" className="head-count" onClick={onWishlist} aria-label={`Open wishlist${wishCount ? `, ${wishCount} saved` : ""}`}>
+            <button className="head-count" onClick={onWishlist}>
               <span className="action-icon">
                 <Heart size={18} />
               </span>
               <span className="action-label">Wishlist</span>
               {wishCount > 0 && <em>{wishCount}</em>}
             </button>
-            <button type="button" className="head-count cart-head" onClick={onCart} aria-label={`Open cart${cartCount ? `, ${cartCount} items` : ""}`}>
+            <button className="head-count cart-head" onClick={onCart}>
               <span className="action-icon">
                 <ShoppingCart size={18} />
               </span>
@@ -311,7 +264,6 @@ function Header({
               {cartCount > 0 && <em>{cartCount}</em>}
             </button>
             <button
-              type="button"
               className="theme-toggle"
               onClick={onToggleTheme}
               aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
@@ -323,13 +275,13 @@ function Header({
                 </span>
               </span>
             </button>
-            <button type="button" className="profile-button" aria-label="DealKart account">
+            <button className="profile-button" aria-label="DealKart account">
               <UserRound size={17} />
             </button>
           </div>
         </div>
       </header>
-      <nav className={hidden ? "nav-hidden" : ""} aria-label="Primary navigation">
+      <nav className={hidden ? "nav-hidden" : ""}>
         <div className="nav-inner">
           <div className="nav-deals">
             <Zap size={12} fill="currentColor" /> Deals
@@ -355,14 +307,13 @@ function Hero({ slide, setSlide, onExplore }) {
   return (
     <section
       className="hero reveal"
-      aria-roledescription="carousel"
-      aria-label="DealKart promotional offers"
+      aria-label="DealKart promotional hero carousel"
     >
       <div
         className="hero-poster-stage"
         style={{ "--hero-bg": `url(${s.image})` }}
       >
-        <img key={slide} src={s.image} alt={s.alt} fetchPriority={slide === 0 ? "high" : "auto"} decoding="async" />
+        <img key={slide} src={s.image} alt={s.alt} />
       </div>
       <div className="hero-frame">
         <div className="hero-live">
@@ -388,15 +339,13 @@ function Hero({ slide, setSlide, onExplore }) {
       >
         <ChevronRight />
       </button>
-      <div className="dots" role="tablist" aria-label="Choose promotional slide">
+      <div className="dots">
         {heroSlides.map((_, i) => (
           <button
             key={i}
             className={i === slide ? "active" : ""}
             onClick={() => setSlide(i)}
-            role="tab"
-            aria-selected={i === slide}
-            aria-label={`Show promotional slide ${i + 1}`}
+            aria-label={`Slide ${i + 1}`}
           />
         ))}
       </div>
@@ -437,27 +386,17 @@ function Trust() {
     </section>
   );
 }
-function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen }) {
+function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, onBuyNow }) {
   return (
     <article
       className="card reveal"
-      tabIndex={0}
-      role="button"
-      aria-label={`View details for ${p.name}`}
       onClick={() => {
         onSeen(p);
         onOpen(p);
       }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSeen(p);
-          onOpen(p);
-        }
-      }}
     >
       <div className="pic">
-        <img src={p.image} alt={p.name} loading="lazy" decoding="async" />
+        <img src={p.image} alt={p.name} />
         <span className="badge">{p.badge}</span>
         <button
           className={"heart " + (wished ? "liked" : "")}
@@ -525,11 +464,7 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen }) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.open(
-                  waUrl([{ p, qty: 1 }]),
-                  "_blank",
-                  "noopener,noreferrer",
-                );
+                onBuyNow(p);
               }}
             >
               <MessageCircle size={14} /> Buy now
@@ -577,7 +512,7 @@ function productHasReturn(p) {
   return Boolean(value);
 }
 
-function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
+function Modal({ p, onClose, onAdd, onWish, wished, onSeen, onBuyNow }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   useEffect(() => setImageIndex(0), [p?.id]);
@@ -591,12 +526,12 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
 
   return (
     <div className="backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="product-dialog-title" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="close" onClick={onClose} aria-label="Close product details">
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <button className="close" onClick={onClose} aria-label="Close">
           <X />
         </button>
         <div className="modal-image">
-          <img src={activeImage} alt={`${p.name} view ${imageIndex + 1}`} decoding="async" />
+          <img src={activeImage} alt={`${p.name} view ${imageIndex + 1}`} />
           <span className="modal-discount">-{discount(p)}%</span>
           <button
             className={"modal-heart " + (wished ? "liked" : "")}
@@ -641,7 +576,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
         </div>
         <div className="modal-info">
           <span className="brand">{p.brand}</span>
-          <h2 id="product-dialog-title">{p.name}</h2>
+          <h2>{p.name}</h2>
           <div className="rating">
             <Star size={14} fill="currentColor" />
             {p.rating}
@@ -707,15 +642,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
             <button onClick={() => onAdd(p)}>
               <ShoppingCart size={17} /> Add to cart
             </button>
-            <button
-              onClick={() =>
-                window.open(
-                  waUrl([{ p, qty: 1 }]),
-                  "_blank",
-                  "noopener,noreferrer",
-                )
-              }
-            >
+            <button onClick={() => onBuyNow(p)}>
               <MessageCircle size={17} /> Buy on WhatsApp
             </button>
           </div>
@@ -747,15 +674,15 @@ function Wishlist({ open, onClose, items, onOpen, onAdd, onWish }) {
         className={"drawer-overlay " + (open ? "show" : "")}
         onClick={onClose}
       />
-      <aside className={"wishlist-panel " + (open ? "open" : "")} role="dialog" aria-modal="true" aria-labelledby="wishlist-title">
+      <aside className={"wishlist-panel " + (open ? "open" : "")}>
         <div className="wishlist-head">
           <div>
-            <b id="wishlist-title">Your wishlist</b>
+            <b>Your wishlist</b>
             <small>
               {items.length} saved {items.length === 1 ? "item" : "items"}
             </small>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close wishlist">
+          <button onClick={onClose}>
             <X />
           </button>
         </div>
@@ -772,7 +699,7 @@ function Wishlist({ open, onClose, items, onOpen, onAdd, onWish }) {
           <div className="wishlist-list">
             {items.map((p) => (
               <div className="wish-item" key={p.id}>
-                <img src={p.image} alt={p.name} loading="lazy" decoding="async" />
+                <img src={p.image} alt={p.name} />
                 <div>
                   <small>{p.brand}</small>
                   <b>{p.name}</b>
@@ -817,7 +744,7 @@ function RecentlyViewed({ items, onOpen }) {
       <div className="recent-row">
         {items.map((p) => (
           <button className="recent-card" key={p.id} onClick={() => onOpen(p)}>
-            <img src={p.image} alt={p.name} loading="lazy" decoding="async" />
+            <img src={p.image} alt="" />
             <span>
               <small>{p.brand}</small>
               <b>{p.name}</b>
@@ -923,7 +850,7 @@ function InfoModal({ type, onClose }) {
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
               target="_blank"
-              rel="noopener noreferrer"
+              rel="noreferrer"
             >
               <MessageCircle size={15} />
               <strong>WhatsApp:</strong> {SUPPORT_PHONE}
@@ -943,12 +870,12 @@ function InfoModal({ type, onClose }) {
   }[type];
   return (
     <div className="backdrop" onClick={onClose}>
-      <div className="info-modal" role="dialog" aria-modal="true" aria-labelledby="info-modal-title" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="close" onClick={onClose} aria-label="Close information">
+      <div className="info-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="close" onClick={onClose}>
           <X />
         </button>
         <span className="brand">{content.kicker}</span>
-        <h2 id="info-modal-title">{content.title}</h2>
+        <h2>{content.title}</h2>
         <div className="info-body">{content.body}</div>
       </div>
     </div>
@@ -1024,13 +951,13 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
         className={"cart-overlay " + (open ? "show" : "")}
         onClick={onClose}
       />
-      <aside className={"cart " + (open ? "open" : "")} role="dialog" aria-modal="true" aria-labelledby="cart-title">
+      <aside className={"cart " + (open ? "open" : "")}>
         <div className="cart-headline">
           <div>
-            <b id="cart-title">Your Cart</b>
+            <b>Your Cart</b>
             <small>{items.reduce((s, x) => s + x.qty, 0)} items</small>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close cart">
+          <button onClick={onClose} aria-label="Close cart">
             <X />
           </button>
         </div>
@@ -1056,7 +983,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   return (
                     <div className="cart-item" key={x.p.id}>
                       <div className="cart-item-badge">{off}% off</div>
-                      <img src={x.p.image} alt={x.p.name} loading="lazy" decoding="async" />
+                      <img src={x.p.image} alt="" />
                       <div className="ci">
                         <b>{x.p.name}</b>
                         <small>
@@ -1161,7 +1088,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   <div className="cart-deals-row">
                     {dealProducts.map((p) => (
                       <div className="cart-deal-card" key={p.id}>
-                        <img src={p.image} alt={p.name} loading="lazy" decoding="async" />
+                        <img src={p.image} alt="" />
                         <b title={p.name}>{p.name}</b>
                         <div>
                           {p.oldPrice && <del>{money(p.oldPrice)}</del>}
@@ -1227,18 +1154,24 @@ function Checkout({
   couponInfo = { code: "", discount: 0 },
 }) {
   const [f, setF] = useState({ name: "", phone: "", address: "", pincode: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     if (open) {
       try {
         const saved = JSON.parse(
-          safeStorageGet("dealkart-checkout", "null"),
+          localStorage.getItem("dealkart-checkout") || "null",
         );
         if (saved) setF(saved);
       } catch {}
     }
   }, [open]);
   useEffect(() => {
-    safeStorageSet("dealkart-checkout", JSON.stringify(f));
+    if (!open) setIsSubmitting(false);
+  }, [open]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("dealkart-checkout", JSON.stringify(f));
+    } catch {}
   }, [f]);
   if (!open) return null;
   const subtotal = items.reduce((s, x) => s + x.p.price * x.qty, 0);
@@ -1248,17 +1181,23 @@ function Checkout({
     /^\d{10}$/.test(f.phone.trim()) &&
     /^\d{6}$/.test(f.pincode.trim()) &&
     f.address.trim();
+  const whatsappUrl = ok ? waUrl(items, f, couponInfo) : "";
+  const continueToWhatsApp = () => {
+    if (!ok || isSubmitting) return;
+    setIsSubmitting(true);
+    window.location.assign(whatsappUrl);
+  };
   return (
     <div className="backdrop" onClick={onClose}>
-      <div className="checkout" role="dialog" aria-modal="true" aria-labelledby="checkout-title" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="close" onClick={onClose} aria-label="Close checkout">
+      <div className="checkout" onClick={(e) => e.stopPropagation()}>
+        <button className="close" onClick={onClose}>
           <X />
         </button>
         <div className="checkout-top">
           <MessageCircle />
           <div>
             <small>DEALKART CHECKOUT</small>
-            <h2 id="checkout-title">Complete your order</h2>
+            <h2>Complete your order</h2>
             <p>
               Enter your details, then we'll open WhatsApp with everything
               filled in.
@@ -1271,10 +1210,9 @@ function Checkout({
             ["phone", "Phone number", "10-digit mobile number"],
             ["pincode", "Pincode", "6-digit pincode"],
           ].map(([k, l, ph]) => (
-            <label key={k} htmlFor={`checkout-${k}`}>
+            <label key={k}>
               {l}
               <input
-                id={`checkout-${k}`}
                 inputMode={
                   k === "phone" || k === "pincode" ? "numeric" : "text"
                 }
@@ -1290,30 +1228,16 @@ function Checkout({
                   })
                 }
                 placeholder={ph}
-                autoComplete={k === "name" ? "name" : k === "phone" ? "tel" : "postal-code"}
-                required
-                aria-invalid={
-                  Boolean(f[k]) &&
-                  (k === "phone"
-                    ? !/^\d{10}$/.test(f[k].trim())
-                    : k === "pincode"
-                      ? !/^\d{6}$/.test(f[k].trim())
-                      : !f[k].trim())
-                }
               />
             </label>
           ))}
-          <label htmlFor="checkout-address">
+          <label>
             Full delivery address
             <textarea
-              id="checkout-address"
               rows="3"
               value={f.address}
               onChange={(e) => setF({ ...f, address: e.target.value })}
               placeholder="House / flat, street, area, city, state"
-              autoComplete="street-address"
-              required
-              aria-invalid={Boolean(f.address) && !f.address.trim()}
             />
           </label>
         </div>
@@ -1328,18 +1252,14 @@ function Checkout({
           </span>
           <b>{money(orderTotal)}</b>
         </div>
-        <a
-          className={"checkout-btn " + (!ok ? "disabled" : "")}
-          href={ok ? waUrl(items, f, couponInfo) : undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-disabled={!ok}
-          onClick={(e) => {
-            if (!ok) e.preventDefault();
-          }}
+        <button
+          type="button"
+          className={"checkout-btn " + (!ok || isSubmitting ? "disabled" : "")}
+          disabled={!ok || isSubmitting}
+          onClick={continueToWhatsApp}
         >
           <MessageCircle size={18} /> Continue to WhatsApp
-        </a>
+        </button>
         <div className="checkout-note">
           <ShieldCheck size={14} /> Your details are only used to prepare your
           WhatsApp order message.
@@ -1419,7 +1339,7 @@ function Footer({ setInfo, wishCount, onWishlist }) {
           <a
             href={`https://wa.me/${WHATSAPP_NUMBER}`}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noreferrer"
           >
             WhatsApp ordering <ExternalLink size={11} />
           </a>
@@ -1439,7 +1359,15 @@ function Footer({ setInfo, wishCount, onWishlist }) {
     </footer>
   );
 }
-function SpecialDealsPage({ onOpen, onAdd, onWish, wished, onSeen, onBack }) {
+function SpecialDealsPage({
+  onOpen,
+  onAdd,
+  onWish,
+  wished,
+  onSeen,
+  onBuyNow,
+  onBack,
+}) {
   return (
     <main className="special-page">
       <section className="special-hero reveal">
@@ -1500,6 +1428,7 @@ function SpecialDealsPage({ onOpen, onAdd, onWish, wished, onSeen, onBack }) {
                 onWish={onWish}
                 wished={wished(p)}
                 onSeen={onSeen}
+                onBuyNow={onBuyNow}
               />
             </div>
           ))}
@@ -1567,6 +1496,11 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [checkout, setCheckout] = useState(false);
+  const [checkoutItems, setCheckoutItems] = useState([]);
+  const [checkoutCouponInfo, setCheckoutCouponInfo] = useState({
+    code: "",
+    discount: 0,
+  });
   const [info, setInfo] = useState(null);
   const [slide, setSlide] = useState(0);
   const [hidden, setHidden] = useState(false);
@@ -1583,61 +1517,52 @@ function App() {
   }, []);
   const [theme, setTheme] = useState(() => {
     try {
-      return safeStorageGet("dealkart-theme", "light") || "light";
+      return localStorage.getItem("dealkart-theme") || "light";
     } catch {
-      return "light";
+      return "dark";
     }
   });
   useEffect(() => {
-    safeStorageSet("dealkart-theme", theme);
+    try {
+      localStorage.setItem("dealkart-theme", theme);
+    } catch {}
   }, [theme]);
   useEffect(() => {
     try {
       const saved = JSON.parse(
-        safeStorageGet("dealkart-wishlist", "[]"),
+        localStorage.getItem("dealkart-wishlist") || "[]",
       );
       setWish(
         saved.map((x) => products.find((p) => p.id === x.id)).filter(Boolean),
       );
-      const rv = JSON.parse(safeStorageGet("dealkart-recent", "[]"));
+      const rv = JSON.parse(localStorage.getItem("dealkart-recent") || "[]");
       setRecent(
         rv.map((x) => products.find((p) => p.id === x.id)).filter(Boolean),
       );
     } catch {}
   }, []);
   useEffect(() => {
-    safeStorageSet(
+    localStorage.setItem(
       "dealkart-wishlist",
       JSON.stringify(wish.map((p) => ({ id: p.id }))),
     );
   }, [wish]);
   useEffect(() => {
-    safeStorageSet(
+    localStorage.setItem(
       "dealkart-recent",
       JSON.stringify(recent.map((p) => ({ id: p.id }))),
     );
   }, [recent]);
   useEffect(() => {
-    const elements = [...document.querySelectorAll(".reveal:not(.revealed)")];
-    if (!elements.length) return undefined;
-    if (!("IntersectionObserver" in window)) {
-      elements.forEach((el) => el.classList.add("revealed"));
-      return undefined;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("revealed");
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { rootMargin: "0px 0px -8% 0px", threshold: 0.01 },
-    );
-    elements.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
-  }, [catalogVersion, page, q, category]);
+    const reveal = () =>
+      document.querySelectorAll(".reveal").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight * 0.9) el.classList.add("revealed");
+      });
+    reveal();
+    window.addEventListener("scroll", reveal, { passive: true });
+    return () => window.removeEventListener("scroll", reveal);
+  }, [q, category]);
   useEffect(() => {
     let last = window.scrollY;
     const onScroll = () => {
@@ -1653,62 +1578,6 @@ function App() {
     const id = setTimeout(() => setToast(""), 2200);
     return () => clearTimeout(id);
   }, [toast]);
-  useEffect(() => {
-    const dialogOpen = Boolean(selected || cartOpen || wishlistOpen || checkout || info);
-    const onKeyDown = (event) => {
-      if (event.key !== "Escape") return;
-      if (selected) setSelected(null);
-      else if (checkout) setCheckout(false);
-      else if (cartOpen) setCartOpen(false);
-      else if (wishlistOpen) setWishlistOpen(false);
-      else if (info) setInfo(null);
-    };
-    if (dialogOpen) {
-      document.addEventListener("keydown", onKeyDown);
-      document.body.classList.add("modal-open");
-    }
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.classList.remove("modal-open");
-    };
-  }, [selected, cartOpen, wishlistOpen, checkout, info]);
-
-  useEffect(() => {
-    if (page === "admin") {
-      updateSeo({
-        title: "DealKart Admin",
-        description: "DealKart catalog administration.",
-      });
-      return;
-    }
-    if (page === "special") {
-      updateSeo({
-        title: "Today's Special Deals | DealKart",
-        description: "Explore DealKart's hand-picked featured deals for today.",
-      });
-      return;
-    }
-    updateSeo({
-      title: selected ? `${selected.name} | DealKart` : "DealKart — Shop More. Save Bigger.",
-      description: selected?.description || DEFAULT_META_DESCRIPTION,
-    });
-  }, [page, selected]);
-
-  useEffect(() => {
-    if (catalogStatus !== "ready" || !products.length) return;
-    const itemListElement = products.slice(0, 24).map((p, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: p.name,
-      url: SITE_URL,
-    }));
-    upsertJsonLd("product-list", {
-      "@context": "https://schema.org",
-      "@type": "ItemList",
-      name: "DealKart products",
-      itemListElement,
-    });
-  }, [catalogStatus, catalogVersion]);
   const filtered = useMemo(() => {
     const s = q.toLowerCase().trim();
     return products.filter(
@@ -1769,6 +1638,18 @@ function App() {
   };
   const seen = (p) =>
     setRecent((r) => [p, ...r.filter((x) => x.id !== p.id)].slice(0, 4));
+  const openCheckout = (items, promo = { code: "", discount: 0 }) => {
+    if (!Array.isArray(items) || !items.length) return;
+    setCheckoutItems(items);
+    setCheckoutCouponInfo({
+      code: promo.code || promo.coupon || "",
+      discount: Number(promo.discount) || 0,
+    });
+    setCheckout(true);
+  };
+  const buyNow = (p, qty = 1) => {
+    openCheckout([{ p, qty }]);
+  };
   const scrollProducts = () =>
     document
       .getElementById("products")
@@ -1841,6 +1722,7 @@ function App() {
           onWish={toggleWish}
           wished={(p) => wish.some((x) => x.id === p.id)}
           onSeen={seen}
+          onBuyNow={buyNow}
           onBack={() => {
             window.location.hash = "top";
           }}
@@ -1875,6 +1757,7 @@ function App() {
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
+                    onBuyNow={buyNow}
                   />
                 </div>
               ))}
@@ -1928,6 +1811,7 @@ function App() {
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
+                    onBuyNow={buyNow}
                   />
                 ))}
               </div>
@@ -1974,9 +1858,14 @@ function App() {
                 </span>
               </div>
             </div>
-            <button onClick={() => setCheckout(true)}>
+            <a
+              href={WHATSAPP_HELP_URL}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Order on WhatsApp"
+            >
               <MessageCircle size={18} /> Order on WhatsApp
-            </button>
+            </a>
           </section>
           <section className="about-strip reveal">
             <div>
@@ -2015,9 +1904,9 @@ function App() {
       />
       <a
         className="floating-support"
-        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi DealKart, I need help 👋")}`}
+        href={WHATSAPP_HELP_URL}
         target="_blank"
-        rel="noopener noreferrer"
+        rel="noreferrer"
         aria-label="Contact DealKart on WhatsApp"
       >
         <MessageCircle size={20} />
@@ -2030,6 +1919,7 @@ function App() {
         onWish={toggleWish}
         wished={selected ? wish.some((x) => x.id === selected.id) : false}
         onSeen={seen}
+        onBuyNow={buyNow}
       />
       <Wishlist
         open={wishlistOpen}
@@ -2050,25 +1940,28 @@ function App() {
         onChange={change}
         onRemove={remove}
         onCheckout={(promo = { coupon: "", discount: 0 }) => {
-          setCouponInfo({
+          setCartOpen(false);
+          setCheckoutItems(cart);
+          setCheckoutCouponInfo({
             code: promo.coupon || "",
             discount: promo.discount || 0,
           });
-          setCartOpen(false);
           setCheckout(true);
         }}
       />
       <Checkout
         open={checkout}
-        onClose={() => setCheckout(false)}
-        items={
-          cart.length ? cart : products.slice(0, 1).map((p) => ({ p, qty: 1 }))
-        }
-        couponInfo={couponInfo}
+        onClose={() => {
+          setCheckout(false);
+          setCheckoutItems([]);
+          setCheckoutCouponInfo({ code: "", discount: 0 });
+        }}
+        items={checkoutItems.length ? checkoutItems : cart}
+        couponInfo={checkoutCouponInfo}
       />
       <InfoModal type={info} onClose={() => setInfo(null)} />
       {toast && (
-        <div className="toast" role="status" aria-live="polite">
+        <div className="toast">
           <Check size={16} />
           {toast}
         </div>
