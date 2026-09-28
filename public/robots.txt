@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dealkart-flax.vercel.app/sitemap.xml
