@@ -32,13 +32,15 @@ import {
 import { Component, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import AdminPage from "./AdminPage";
-import dealkartSymbol from "./assets/dealkart-symbol.png";
-import heroFood from "./assets/hero-posters/image  4.png";
-import heroGym from "./assets/hero-posters/image 1.png";
-import heroFitness from "./assets/hero-posters/image 3.png";
-import heroWellness from "./assets/hero-posters/image5.png";
-import heroStock from "./assets/hero-posters/stock-up-days.png";
+import dealkartSymbol from "./assets/dealkart-symbol.webp";
+import heroGym from "./assets/hero-posters/fitness-home-gym.webp";
+import heroFitness from "./assets/hero-posters/fitness-stronger.webp";
+import heroFood from "./assets/hero-posters/food-clean-green.webp";
+import heroStock from "./assets/hero-posters/stock-up-days.webp";
+import heroWellness from "./assets/hero-posters/wellness-balance.webp";
 import { fetchRemoteCatalog, getInitialCatalog } from "./catalogStore";
+import SEO, { SITE_URL, homeSchema, productPath, slugify } from "./SEO";
+import ProductPage from "./ProductPage";
 import "./styles.css";
 
 const WHATSAPP_NUMBER = "919244335428";
@@ -75,9 +77,6 @@ const heroSlides = [
   { image: heroFood, alt: "Clean food and healthy essentials deals" },
 ];
 const money = (n) => (n ? `₹${n.toLocaleString("en-IN")}` : "");
-const WHATSAPP_HELP_MESSAGE =
-  "Hi DealKart, I need help regarding my order or product info.";
-const WHATSAPP_HELP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_HELP_MESSAGE)}`;
 const productGalleryImages = import.meta.glob(
   "./assets/product-gallery/product-*-view*.jpg",
   {
@@ -175,7 +174,7 @@ function waUrl(items, customer = {}, promo = {}) {
 function Logo() {
   return (
     <a className="logo" href="#top" aria-label="DealKart home">
-      <img src={dealkartSymbol} alt="DealKart symbol" />
+      <img src={dealkartSymbol} alt="DealKart logo" width="38" height="38" decoding="async" />
       <span className="logo-word">
         Deal<span>Kart</span>
       </span>
@@ -313,12 +312,13 @@ function Hero({ slide, setSlide, onExplore }) {
         className="hero-poster-stage"
         style={{ "--hero-bg": `url(${s.image})` }}
       >
-        <img key={slide} src={s.image} alt={s.alt} />
+        <img key={slide} src={s.image} alt={s.alt} width="1920" height="1080" loading={slide === 0 ? "eager" : "lazy"} fetchPriority={slide === 0 ? "high" : "auto"} decoding="async" />
       </div>
       <div className="hero-frame">
         <div className="hero-live">
           <span /> LIVE DEALS
         </div>
+        <h1 className="hero-seo-title">Best Deals & Online Shopping in India</h1>
         <button className="hero-explore" onClick={onExplore}>
           Explore deals <ArrowRight size={15} />
         </button>
@@ -386,7 +386,7 @@ function Trust() {
     </section>
   );
 }
-function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, onBuyNow }) {
+function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, priority = false }) {
   return (
     <article
       className="card reveal"
@@ -396,7 +396,7 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, onBuyNow }) {
       }}
     >
       <div className="pic">
-        <img src={p.image} alt={p.name} />
+        <img src={p.image} alt={`${p.name} product image`} width="640" height="640" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" />
         <span className="badge">{p.badge}</span>
         <button
           className={"heart " + (wished ? "liked" : "")}
@@ -464,7 +464,11 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, onBuyNow }) {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onBuyNow(p);
+                window.open(
+                  waUrl([{ p, qty: 1 }]),
+                  "_blank",
+                  "noopener,noreferrer",
+                );
               }}
             >
               <MessageCircle size={14} /> Buy now
@@ -479,7 +483,18 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, onBuyNow }) {
           <span>({p.reviews})</span>
         </div>
         <small>{p.brand}</small>
-        <h3>{p.name}</h3>
+        <h3>
+          <a
+            href={productPath(p)}
+            onClick={(e) => {
+              e.preventDefault();
+              onSeen(p);
+              onOpen(p);
+            }}
+          >
+            {p.name}
+          </a>
+        </h3>
         <div className="price">
           <del>{money(mrp(p))}</del>
           <b>{money(salePrice(p))}</b>
@@ -512,7 +527,7 @@ function productHasReturn(p) {
   return Boolean(value);
 }
 
-function Modal({ p, onClose, onAdd, onWish, wished, onSeen, onBuyNow }) {
+function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   useEffect(() => setImageIndex(0), [p?.id]);
@@ -531,7 +546,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen, onBuyNow }) {
           <X />
         </button>
         <div className="modal-image">
-          <img src={activeImage} alt={`${p.name} view ${imageIndex + 1}`} />
+          <img src={activeImage} alt={`${p.name} product view ${imageIndex + 1}`} width="720" height="720" decoding="async" />
           <span className="modal-discount">-{discount(p)}%</span>
           <button
             className={"modal-heart " + (wished ? "liked" : "")}
@@ -567,7 +582,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen, onBuyNow }) {
                     onClick={() => setImageIndex(i)}
                     aria-label={`View image ${i + 1}`}
                   >
-                    <img src={src} alt="" />
+                    <img src={src} alt={`${p.name} product thumbnail ${i + 1}`} width="88" height="88" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>
@@ -642,7 +657,15 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen, onBuyNow }) {
             <button onClick={() => onAdd(p)}>
               <ShoppingCart size={17} /> Add to cart
             </button>
-            <button onClick={() => onBuyNow(p)}>
+            <button
+              onClick={() =>
+                window.open(
+                  waUrl([{ p, qty: 1 }]),
+                  "_blank",
+                  "noopener,noreferrer",
+                )
+              }
+            >
               <MessageCircle size={17} /> Buy on WhatsApp
             </button>
           </div>
@@ -744,7 +767,7 @@ function RecentlyViewed({ items, onOpen }) {
       <div className="recent-row">
         {items.map((p) => (
           <button className="recent-card" key={p.id} onClick={() => onOpen(p)}>
-            <img src={p.image} alt="" />
+            <img src={p.image} alt={p.name} loading="lazy" decoding="async" />
             <span>
               <small>{p.brand}</small>
               <b>{p.name}</b>
@@ -983,7 +1006,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   return (
                     <div className="cart-item" key={x.p.id}>
                       <div className="cart-item-badge">{off}% off</div>
-                      <img src={x.p.image} alt="" />
+                      <img src={x.p.image} alt={x.p.name} loading="lazy" decoding="async" />
                       <div className="ci">
                         <b>{x.p.name}</b>
                         <small>
@@ -1088,7 +1111,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   <div className="cart-deals-row">
                     {dealProducts.map((p) => (
                       <div className="cart-deal-card" key={p.id}>
-                        <img src={p.image} alt="" />
+                        <img src={p.image} alt={p.name} loading="lazy" decoding="async" />
                         <b title={p.name}>{p.name}</b>
                         <div>
                           {p.oldPrice && <del>{money(p.oldPrice)}</del>}
@@ -1154,7 +1177,6 @@ function Checkout({
   couponInfo = { code: "", discount: 0 },
 }) {
   const [f, setF] = useState({ name: "", phone: "", address: "", pincode: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   useEffect(() => {
     if (open) {
       try {
@@ -1164,9 +1186,6 @@ function Checkout({
         if (saved) setF(saved);
       } catch {}
     }
-  }, [open]);
-  useEffect(() => {
-    if (!open) setIsSubmitting(false);
   }, [open]);
   useEffect(() => {
     try {
@@ -1181,12 +1200,6 @@ function Checkout({
     /^\d{10}$/.test(f.phone.trim()) &&
     /^\d{6}$/.test(f.pincode.trim()) &&
     f.address.trim();
-  const whatsappUrl = ok ? waUrl(items, f, couponInfo) : "";
-  const continueToWhatsApp = () => {
-    if (!ok || isSubmitting) return;
-    setIsSubmitting(true);
-    window.location.assign(whatsappUrl);
-  };
   return (
     <div className="backdrop" onClick={onClose}>
       <div className="checkout" onClick={(e) => e.stopPropagation()}>
@@ -1252,14 +1265,17 @@ function Checkout({
           </span>
           <b>{money(orderTotal)}</b>
         </div>
-        <button
-          type="button"
-          className={"checkout-btn " + (!ok || isSubmitting ? "disabled" : "")}
-          disabled={!ok || isSubmitting}
-          onClick={continueToWhatsApp}
+        <a
+          className={"checkout-btn " + (!ok ? "disabled" : "")}
+          href={ok ? waUrl(items, f, couponInfo) : undefined}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => {
+            if (!ok) e.preventDefault();
+          }}
         >
           <MessageCircle size={18} /> Continue to WhatsApp
-        </button>
+        </a>
         <div className="checkout-note">
           <ShieldCheck size={14} /> Your details are only used to prepare your
           WhatsApp order message.
@@ -1359,15 +1375,7 @@ function Footer({ setInfo, wishCount, onWishlist }) {
     </footer>
   );
 }
-function SpecialDealsPage({
-  onOpen,
-  onAdd,
-  onWish,
-  wished,
-  onSeen,
-  onBuyNow,
-  onBack,
-}) {
+function SpecialDealsPage({ onOpen, onAdd, onWish, wished, onSeen, onBack }) {
   return (
     <main className="special-page">
       <section className="special-hero reveal">
@@ -1428,7 +1436,6 @@ function SpecialDealsPage({
                 onWish={onWish}
                 wished={wished(p)}
                 onSeen={onSeen}
-                onBuyNow={onBuyNow}
               />
             </div>
           ))}
@@ -1483,11 +1490,17 @@ function App() {
     };
   }, []);
   const [q, setQ] = useState("");
-  const [page, setPage] = useState(() => {
-    if (window.location.hash === "#admin") return "admin";
-    if (window.location.hash === "#todays-special") return "special";
-    return "home";
-  });
+  const getRoute = () => {
+    const path = window.location.pathname.replace(/\/+$/, "") || "/";
+    if (path === "/admin" || window.location.hash === "#admin") return { page: "admin" };
+    if (path === "/todays-special" || window.location.hash === "#todays-special") return { page: "special" };
+    const match = path.match(/^\/product\/(.+)-(\d+)$/i);
+    if (match) return { page: "product", productId: Number(match[2]) };
+    return { page: "home" };
+  };
+  const initialRoute = getRoute();
+  const [page, setPage] = useState(initialRoute.page);
+  const [productId, setProductId] = useState(initialRoute.productId || null);
   const [category, setCategory] = useState("All Deals");
   const [selected, setSelected] = useState(null);
   const [cart, setCart] = useState([]);
@@ -1496,11 +1509,6 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [checkout, setCheckout] = useState(false);
-  const [checkoutItems, setCheckoutItems] = useState([]);
-  const [checkoutCouponInfo, setCheckoutCouponInfo] = useState({
-    code: "",
-    discount: 0,
-  });
   const [info, setInfo] = useState(null);
   const [slide, setSlide] = useState(0);
   const [hidden, setHidden] = useState(false);
@@ -1508,9 +1516,9 @@ function App() {
   const [couponInfo, setCouponInfo] = useState({ code: "", discount: 0 });
   useEffect(() => {
     const onHash = () => {
-      if (window.location.hash === "#admin") setPage("admin");
-      else if (window.location.hash === "#todays-special") setPage("special");
-      else setPage("home");
+      const route = getRoute();
+      setPage(route.page);
+      setProductId(route.productId || null);
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
@@ -1638,23 +1646,29 @@ function App() {
   };
   const seen = (p) =>
     setRecent((r) => [p, ...r.filter((x) => x.id !== p.id)].slice(0, 4));
-  const openCheckout = (items, promo = { code: "", discount: 0 }) => {
-    if (!Array.isArray(items) || !items.length) return;
-    setCheckoutItems(items);
-    setCheckoutCouponInfo({
-      code: promo.code || promo.coupon || "",
-      discount: Number(promo.discount) || 0,
-    });
-    setCheckout(true);
-  };
-  const buyNow = (p, qty = 1) => {
-    openCheckout([{ p, qty }]);
-  };
   const scrollProducts = () =>
     document
       .getElementById("products")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  if (page === "admin") return <AdminPage />;
+  if (page === "admin") {
+    return (
+      <>
+        <SEO title="DealKart Admin" description="DealKart catalog administration." path="/admin" noindex />
+        <AdminPage />
+      </>
+    );
+  }
+  if (catalogStatus === "ready" && page === "product") {
+    const product = products.find((p) => Number(p.id) === Number(productId));
+    return (
+      <ProductPage
+        product={product}
+        related={products}
+        onAdd={add}
+        onBack={() => { window.location.href = "/"; }}
+      />
+    );
+  }
   if (catalogStatus !== "ready") {
     return (
       <div
@@ -1703,6 +1717,21 @@ function App() {
   }
   return (
     <div id="top" className={`site ${theme === "light" ? "light-theme" : ""}`}>
+      {page === "special" ? (
+        <SEO
+          title="Today's Best Deals in India | DealKart"
+          description="Shop DealKart's hand-picked top 10 deals with sharp prices, Pan India delivery and simple WhatsApp ordering."
+          path="/todays-special"
+          schema={homeSchema(specialDeals)}
+        />
+      ) : (
+        <SEO
+          title="DealKart – Best Deals, Lowest Prices & Online Shopping in India"
+          description="Shop curated deals from trusted brands at DealKart. Discover electronics, fashion, fitness, skincare, food and more with Pan India delivery and WhatsApp ordering."
+          path="/"
+          schema={homeSchema(products)}
+        />
+      )}
       <Header
         query={q}
         setQuery={setQ}
@@ -1722,7 +1751,6 @@ function App() {
           onWish={toggleWish}
           wished={(p) => wish.some((x) => x.id === p.id)}
           onSeen={seen}
-          onBuyNow={buyNow}
           onBack={() => {
             window.location.hash = "top";
           }}
@@ -1757,7 +1785,7 @@ function App() {
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
-                    onBuyNow={buyNow}
+                    priority={index < 2}
                   />
                 </div>
               ))}
@@ -1802,7 +1830,7 @@ function App() {
             </div>
             {filtered.length ? (
               <div className="grid">
-                {filtered.map((p) => (
+                {filtered.map((p, index) => (
                   <ProductCard
                     key={p.id}
                     p={p}
@@ -1811,7 +1839,7 @@ function App() {
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
-                    onBuyNow={buyNow}
+                    priority={index < 4}
                   />
                 ))}
               </div>
@@ -1858,14 +1886,9 @@ function App() {
                 </span>
               </div>
             </div>
-            <a
-              href={WHATSAPP_HELP_URL}
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Order on WhatsApp"
-            >
+            <button onClick={() => setCheckout(true)}>
               <MessageCircle size={18} /> Order on WhatsApp
-            </a>
+            </button>
           </section>
           <section className="about-strip reveal">
             <div>
@@ -1904,7 +1927,7 @@ function App() {
       />
       <a
         className="floating-support"
-        href={WHATSAPP_HELP_URL}
+        href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi DealKart, I need help 👋")}`}
         target="_blank"
         rel="noreferrer"
         aria-label="Contact DealKart on WhatsApp"
@@ -1919,7 +1942,6 @@ function App() {
         onWish={toggleWish}
         wished={selected ? wish.some((x) => x.id === selected.id) : false}
         onSeen={seen}
-        onBuyNow={buyNow}
       />
       <Wishlist
         open={wishlistOpen}
@@ -1940,24 +1962,21 @@ function App() {
         onChange={change}
         onRemove={remove}
         onCheckout={(promo = { coupon: "", discount: 0 }) => {
-          setCartOpen(false);
-          setCheckoutItems(cart);
-          setCheckoutCouponInfo({
+          setCouponInfo({
             code: promo.coupon || "",
             discount: promo.discount || 0,
           });
+          setCartOpen(false);
           setCheckout(true);
         }}
       />
       <Checkout
         open={checkout}
-        onClose={() => {
-          setCheckout(false);
-          setCheckoutItems([]);
-          setCheckoutCouponInfo({ code: "", discount: 0 });
-        }}
-        items={checkoutItems.length ? checkoutItems : cart}
-        couponInfo={checkoutCouponInfo}
+        onClose={() => setCheckout(false)}
+        items={
+          cart.length ? cart : products.slice(0, 1).map((p) => ({ p, qty: 1 }))
+        }
+        couponInfo={couponInfo}
       />
       <InfoModal type={info} onClose={() => setInfo(null)} />
       {toast && (
