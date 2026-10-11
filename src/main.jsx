@@ -32,15 +32,13 @@ import {
 import { Component, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import AdminPage from "./AdminPage";
-import dealkartSymbol from "./assets/dealkart-symbol.webp";
-import heroGym from "./assets/hero-posters/fitness-home-gym.webp";
-import heroFitness from "./assets/hero-posters/fitness-stronger.webp";
-import heroFood from "./assets/hero-posters/food-clean-green.webp";
-import heroStock from "./assets/hero-posters/stock-up-days.webp";
-import heroWellness from "./assets/hero-posters/wellness-balance.webp";
+import dealkartSymbol from "./assets/dealkart-symbol.png";
+import heroGym from "./assets/hero-posters/fitness-home-gym.png";
+import heroFitness from "./assets/hero-posters/fitness-stronger.png";
+import heroFood from "./assets/hero-posters/food-clean-green.png";
+import heroStock from "./assets/hero-posters/stock-up-days.png";
+import heroWellness from "./assets/hero-posters/wellness-balance.png";
 import { fetchRemoteCatalog, getInitialCatalog } from "./catalogStore";
-import SEO, { SITE_URL, homeSchema, productPath, slugify } from "./SEO";
-import ProductPage from "./ProductPage";
 import "./styles.css";
 
 const WHATSAPP_NUMBER = "919244335428";
@@ -174,7 +172,7 @@ function waUrl(items, customer = {}, promo = {}) {
 function Logo() {
   return (
     <a className="logo" href="#top" aria-label="DealKart home">
-      <img src={dealkartSymbol} alt="DealKart logo" width="38" height="38" decoding="async" />
+      <img src={dealkartSymbol} alt="DealKart symbol" />
       <span className="logo-word">
         Deal<span>Kart</span>
       </span>
@@ -312,13 +310,12 @@ function Hero({ slide, setSlide, onExplore }) {
         className="hero-poster-stage"
         style={{ "--hero-bg": `url(${s.image})` }}
       >
-        <img key={slide} src={s.image} alt={s.alt} width="1920" height="1080" loading={slide === 0 ? "eager" : "lazy"} fetchPriority={slide === 0 ? "high" : "auto"} decoding="async" />
+        <img key={slide} src={s.image} alt={s.alt} />
       </div>
       <div className="hero-frame">
         <div className="hero-live">
           <span /> LIVE DEALS
         </div>
-        <h1 className="hero-seo-title">Best Deals & Online Shopping in India</h1>
         <button className="hero-explore" onClick={onExplore}>
           Explore deals <ArrowRight size={15} />
         </button>
@@ -386,7 +383,7 @@ function Trust() {
     </section>
   );
 }
-function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, priority = false }) {
+function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen }) {
   return (
     <article
       className="card reveal"
@@ -396,7 +393,7 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, priority = fals
       }}
     >
       <div className="pic">
-        <img src={p.image} alt={`${p.name} product image`} width="640" height="640" loading={priority ? "eager" : "lazy"} fetchPriority={priority ? "high" : "auto"} decoding="async" />
+        <img src={p.image} alt={p.name} />
         <span className="badge">{p.badge}</span>
         <button
           className={"heart " + (wished ? "liked" : "")}
@@ -483,18 +480,7 @@ function ProductCard({ p, onOpen, onAdd, onWish, wished, onSeen, priority = fals
           <span>({p.reviews})</span>
         </div>
         <small>{p.brand}</small>
-        <h3>
-          <a
-            href={productPath(p)}
-            onClick={(e) => {
-              e.preventDefault();
-              onSeen(p);
-              onOpen(p);
-            }}
-          >
-            {p.name}
-          </a>
-        </h3>
+        <h3>{p.name}</h3>
         <div className="price">
           <del>{money(mrp(p))}</del>
           <b>{money(salePrice(p))}</b>
@@ -546,7 +532,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
           <X />
         </button>
         <div className="modal-image">
-          <img src={activeImage} alt={`${p.name} product view ${imageIndex + 1}`} width="720" height="720" decoding="async" />
+          <img src={activeImage} alt={`${p.name} view ${imageIndex + 1}`} />
           <span className="modal-discount">-{discount(p)}%</span>
           <button
             className={"modal-heart " + (wished ? "liked" : "")}
@@ -582,7 +568,7 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
                     onClick={() => setImageIndex(i)}
                     aria-label={`View image ${i + 1}`}
                   >
-                    <img src={src} alt={`${p.name} product thumbnail ${i + 1}`} width="88" height="88" loading="lazy" decoding="async" />
+                    <img src={src} alt="" />
                   </button>
                 ))}
               </div>
@@ -767,7 +753,7 @@ function RecentlyViewed({ items, onOpen }) {
       <div className="recent-row">
         {items.map((p) => (
           <button className="recent-card" key={p.id} onClick={() => onOpen(p)}>
-            <img src={p.image} alt={p.name} loading="lazy" decoding="async" />
+            <img src={p.image} alt="" />
             <span>
               <small>{p.brand}</small>
               <b>{p.name}</b>
@@ -1006,7 +992,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   return (
                     <div className="cart-item" key={x.p.id}>
                       <div className="cart-item-badge">{off}% off</div>
-                      <img src={x.p.image} alt={x.p.name} loading="lazy" decoding="async" />
+                      <img src={x.p.image} alt="" />
                       <div className="ci">
                         <b>{x.p.name}</b>
                         <small>
@@ -1111,7 +1097,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   <div className="cart-deals-row">
                     {dealProducts.map((p) => (
                       <div className="cart-deal-card" key={p.id}>
-                        <img src={p.image} alt={p.name} loading="lazy" decoding="async" />
+                        <img src={p.image} alt="" />
                         <b title={p.name}>{p.name}</b>
                         <div>
                           {p.oldPrice && <del>{money(p.oldPrice)}</del>}
@@ -1490,17 +1476,11 @@ function App() {
     };
   }, []);
   const [q, setQ] = useState("");
-  const getRoute = () => {
-    const path = window.location.pathname.replace(/\/+$/, "") || "/";
-    if (path === "/admin" || window.location.hash === "#admin") return { page: "admin" };
-    if (path === "/todays-special" || window.location.hash === "#todays-special") return { page: "special" };
-    const match = path.match(/^\/product\/(.+)-(\d+)$/i);
-    if (match) return { page: "product", productId: Number(match[2]) };
-    return { page: "home" };
-  };
-  const initialRoute = getRoute();
-  const [page, setPage] = useState(initialRoute.page);
-  const [productId, setProductId] = useState(initialRoute.productId || null);
+  const [page, setPage] = useState(() => {
+    if (window.location.hash === "#admin") return "admin";
+    if (window.location.hash === "#todays-special") return "special";
+    return "home";
+  });
   const [category, setCategory] = useState("All Deals");
   const [selected, setSelected] = useState(null);
   const [cart, setCart] = useState([]);
@@ -1516,9 +1496,9 @@ function App() {
   const [couponInfo, setCouponInfo] = useState({ code: "", discount: 0 });
   useEffect(() => {
     const onHash = () => {
-      const route = getRoute();
-      setPage(route.page);
-      setProductId(route.productId || null);
+      if (window.location.hash === "#admin") setPage("admin");
+      else if (window.location.hash === "#todays-special") setPage("special");
+      else setPage("home");
     };
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
@@ -1650,25 +1630,7 @@ function App() {
     document
       .getElementById("products")
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  if (page === "admin") {
-    return (
-      <>
-        <SEO title="DealKart Admin" description="DealKart catalog administration." path="/admin" noindex />
-        <AdminPage />
-      </>
-    );
-  }
-  if (catalogStatus === "ready" && page === "product") {
-    const product = products.find((p) => Number(p.id) === Number(productId));
-    return (
-      <ProductPage
-        product={product}
-        related={products}
-        onAdd={add}
-        onBack={() => { window.location.href = "/"; }}
-      />
-    );
-  }
+  if (page === "admin") return <AdminPage />;
   if (catalogStatus !== "ready") {
     return (
       <div
@@ -1717,21 +1679,6 @@ function App() {
   }
   return (
     <div id="top" className={`site ${theme === "light" ? "light-theme" : ""}`}>
-      {page === "special" ? (
-        <SEO
-          title="Today's Best Deals in India | DealKart"
-          description="Shop DealKart's hand-picked top 10 deals with sharp prices, Pan India delivery and simple WhatsApp ordering."
-          path="/todays-special"
-          schema={homeSchema(specialDeals)}
-        />
-      ) : (
-        <SEO
-          title="DealKart – Best Deals, Lowest Prices & Online Shopping in India"
-          description="Shop curated deals from trusted brands at DealKart. Discover electronics, fashion, fitness, skincare, food and more with Pan India delivery and WhatsApp ordering."
-          path="/"
-          schema={homeSchema(products)}
-        />
-      )}
       <Header
         query={q}
         setQuery={setQ}
@@ -1785,7 +1732,6 @@ function App() {
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
-                    priority={index < 2}
                   />
                 </div>
               ))}
@@ -1830,7 +1776,7 @@ function App() {
             </div>
             {filtered.length ? (
               <div className="grid">
-                {filtered.map((p, index) => (
+                {filtered.map((p) => (
                   <ProductCard
                     key={p.id}
                     p={p}
@@ -1839,7 +1785,6 @@ function App() {
                     onWish={toggleWish}
                     wished={wish.some((x) => x.id === p.id)}
                     onSeen={seen}
-                    priority={index < 4}
                   />
                 ))}
               </div>
