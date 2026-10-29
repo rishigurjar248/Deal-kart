@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://deal-kart.co.in/sitemap.xml
+Sitemap: https://dealkart-flax.vercel.app/sitemap.xml
