@@ -1,0 +1,16 @@
+{
+  "name": "DealKart",
+  "short_name": "DealKart",
+  "description": "Curated deals on fitness, nutrition, wellness and everyday essentials.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#090909",
+  "icons": [
+    {
+      "src": "/dealkart-symbol.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}

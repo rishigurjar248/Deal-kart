@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  BadgePercent,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -8,12 +9,14 @@ import {
   Eye,
   Heart,
   History,
+  LockKeyhole,
   Mail,
   MapPin,
   MessageCircle,
   Minus,
   Moon,
   Phone,
+  PiggyBank,
   Plus,
   RotateCcw,
   Search,
@@ -23,6 +26,8 @@ import {
   Sparkles,
   Star,
   Sun,
+  Tag,
+  Ticket,
   Trash2,
   Truck,
   UserRound,
@@ -33,12 +38,16 @@ import { Component, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import AdminPage from "./AdminPage";
 import dealkartSymbol from "./assets/dealkart-symbol.png";
-import heroGym from "./assets/hero-posters/fitness-home-gym.png";
-import heroFitness from "./assets/hero-posters/fitness-stronger.png";
-import heroFood from "./assets/hero-posters/food-clean-green.png";
-import heroStock from "./assets/hero-posters/stock-up-days.png";
-import heroWellness from "./assets/hero-posters/wellness-balance.png";
-import { fetchRemoteCatalog, getInitialCatalog } from "./catalogStore";
+import heroGym from "./assets/hero-posters/fitness-home-gym.webp";
+import heroFitness from "./assets/hero-posters/fitness-stronger.webp";
+import heroFood from "./assets/hero-posters/food-clean-green.webp";
+import heroStock from "./assets/hero-posters/stock-up-days.webp";
+import heroWellness from "./assets/hero-posters/wellness-balance.webp";
+import {
+  compareStorefrontOrder,
+  fetchRemoteCatalog,
+  getInitialCatalog,
+} from "./catalogStore";
 import "./styles.css";
 
 const WHATSAPP_NUMBER = "919244335428";
@@ -156,17 +165,54 @@ const mrp = (p) => {
 };
 const discount = (p) =>
   Math.max(0, Math.round((1 - salePrice(p) / mrp(p)) * 100));
-function waUrl(items, customer = {}, promo = {}) {
+const getItemPayment = ({ p, qty }) => {
+  const price = Math.max(0, Number(p.price) || 0);
+  const quantity = Math.max(0, Number(qty) || 0);
+  const payNowPerItem =
+    p.paymentType === "partial"
+      ? Math.min(Math.max(0, Number(p.partialPaymentAmount) || 0), price)
+      : price;
+  return {
+    payNow: payNowPerItem * quantity,
+    dueOnDelivery: (price - payNowPerItem) * quantity,
+    payNowPerItem,
+    duePerItem: price - payNowPerItem,
+  };
+};
+const getPaymentBreakdown = (items, orderTotal, paymentMode = "full") => {
+  const total = Math.max(0, Number(orderTotal) || 0);
+  const configuredPayNow =
+    paymentMode === "partial"
+      ? items.reduce((sum, item) => sum + getItemPayment(item).payNow, 0)
+      : total;
+  const payNow = Math.min(configuredPayNow, total);
+  return { payNow, dueOnDelivery: total - payNow };
+};
+function waUrl(items, customer = {}, promo = {}, paymentMode = "full") {
   const lines = items
-    .map(({ p, qty }) => `${p.name} | ${p.brand} | ${money(p.price)} × ${qty}`)
+    .map((item) => {
+      const { p, qty } = item;
+      const payment = getItemPayment(item);
+      const itemPrice = Math.max(0, Number(p.price) || 0);
+      const terms =
+        paymentMode === "partial"
+          ? `Partial: ${money(payment.payNowPerItem)} now + ${money(payment.duePerItem)} on delivery per item`
+          : `Full payment: ${money(itemPrice)} now per item`;
+      return `${p.name} | ${p.brand} | ${money(p.price)} × ${qty} | ${terms}`;
+    })
     .join("\n");
   const subtotal = items.reduce((s, x) => s + x.p.price * x.qty, 0);
   const discountAmount = promo.discount || 0;
   const total = Math.max(0, subtotal - discountAmount);
+  const payment = getPaymentBreakdown(items, total, paymentMode);
   const couponLine = promo.code
     ? `\nCoupon: ${promo.code} (${money(discountAmount)} OFF)`
     : "";
-  const m = `Hi DealKart 👋\n\nI want to place an order:\n${lines}${couponLine}\n\nSubtotal: ${money(subtotal)}\nDiscount: ${money(discountAmount)}\nTotal: ${money(total)}\n\nCustomer details:\nName: ${customer.name || ""}\nPhone: ${customer.phone || ""}\nFull delivery address: ${customer.address || ""}\nPincode: ${customer.pincode || ""}`;
+  const couponNote =
+    discountAmount > 0 && paymentMode === "partial"
+      ? "\nCoupon savings reduce the delivery balance first."
+      : "";
+  const m = `Hi DealKart 👋\n\nI want to place an order:\n${lines}${couponLine}\n\nSubtotal: ${money(subtotal)}\nDiscount: ${money(discountAmount)}\nTotal: ${money(total)}\nPay now: ${money(payment.payNow)}\nDue on delivery: ${money(payment.dueOnDelivery)}${couponNote}\n\nCustomer details:\nName: ${customer.name || ""}\nPhone: ${customer.phone || ""}\nFull delivery address: ${customer.address || ""}\nPincode: ${customer.pincode || ""}`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(m)}`;
 }
 function Logo() {
@@ -310,7 +356,14 @@ function Hero({ slide, setSlide, onExplore }) {
         className="hero-poster-stage"
         style={{ "--hero-bg": `url(${s.image})` }}
       >
-        <img key={slide} src={s.image} alt={s.alt} />
+        <img
+          key={slide}
+          src={s.image}
+          alt={s.alt}
+          fetchPriority={slide === 0 ? "high" : "auto"}
+          loading={slide === 0 ? "eager" : "lazy"}
+          decoding="async"
+        />
       </div>
       <div className="hero-frame">
         <div className="hero-live">
@@ -676,7 +729,26 @@ function Modal({ p, onClose, onAdd, onWish, wished, onSeen }) {
     </div>
   );
 }
-function Wishlist({ open, onClose, items, onOpen, onAdd, onWish }) {
+function Wishlist({
+  open,
+  onClose,
+  items,
+  onOpen,
+  onAdd,
+  onAddAll,
+  onClear,
+  onWish,
+}) {
+  const wishlistTotal = items.reduce(
+    (sum, product) => sum + Number(product.price || 0),
+    0,
+  );
+  const wishlistSavings = items.reduce(
+    (sum, product) =>
+      sum + Math.max(0, mrp(product) - Number(product.price || 0)),
+    0,
+  );
+
   return (
     <>
       <div
@@ -685,15 +757,25 @@ function Wishlist({ open, onClose, items, onOpen, onAdd, onWish }) {
       />
       <aside className={"wishlist-panel " + (open ? "open" : "")}>
         <div className="wishlist-head">
-          <div>
-            <b>Your wishlist</b>
-            <small>
-              {items.length} saved {items.length === 1 ? "item" : "items"}
-            </small>
+          <div className="wishlist-heading">
+            <Heart size={21} fill="currentColor" aria-hidden="true" />
+            <div>
+              <b>Your wishlist</b>
+              <small>
+                {items.length} saved {items.length === 1 ? "item" : "items"}
+              </small>
+            </div>
           </div>
-          <button onClick={onClose}>
-            <X />
-          </button>
+          <div className="wishlist-head-actions">
+            {items.length > 0 && (
+              <button className="wishlist-clear" onClick={onClear}>
+                <Trash2 size={14} /> Clear all
+              </button>
+            )}
+            <button onClick={onClose} aria-label="Close wishlist">
+              <X />
+            </button>
+          </div>
         </div>
         {!items.length ? (
           <div className="wishlist-empty">
@@ -705,33 +787,76 @@ function Wishlist({ open, onClose, items, onOpen, onAdd, onWish }) {
             </a>
           </div>
         ) : (
-          <div className="wishlist-list">
-            {items.map((p) => (
-              <div className="wish-item" key={p.id}>
-                <img src={p.image} alt={p.name} />
-                <div>
-                  <small>{p.brand}</small>
-                  <b>{p.name}</b>
-                  <strong>{money(p.price)}</strong>
-                  <div>
-                    <button onClick={() => onAdd(p)}>
-                      <ShoppingCart size={13} /> Add to cart
-                    </button>
-                    <button className="wish-view" onClick={() => onOpen(p)}>
-                      View
-                    </button>
+          <>
+            <div className="wishlist-toolbar">
+              <span>Saved for later</span>
+              <span>
+                {items.length} {items.length === 1 ? "product" : "products"}
+              </span>
+            </div>
+            <div className="wishlist-list">
+              {items.map((p) => (
+                <article className="wish-item" key={p.id}>
+                  <button
+                    className="wish-image"
+                    onClick={() => onOpen(p)}
+                    aria-label={`View ${p.name}`}
+                  >
+                    <img src={p.image} alt="" />
+                  </button>
+                  <div className="wish-content">
+                    <small>{p.brand}</small>
+                    <b>{p.name}</b>
+                    <div className="wish-price-line">
+                      <strong>{money(p.price)}</strong>
+                      {mrp(p) > p.price && <del>{money(mrp(p))}</del>}
+                      {discount(p) > 0 && <em>{discount(p)}% off</em>}
+                    </div>
+                    <div className="wish-rating">
+                      <Star size={12} fill="currentColor" aria-hidden="true" />
+                      <b>{Number(p.rating || 4.3).toFixed(1)}</b>
+                      <span>({p.reviews || "0"} reviews)</span>
+                    </div>
+                    <div className="wish-actions">
+                      <button
+                        className="wish-add"
+                        onClick={() => {
+                          onAdd(p);
+                          onClose();
+                        }}
+                      >
+                        <ShoppingCart size={13} /> Add to cart
+                      </button>
+                      <button className="wish-view" onClick={() => onOpen(p)}>
+                        <Eye size={13} /> View
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <button
-                  className="wish-remove"
-                  onClick={() => onWish(p)}
-                  aria-label="Remove from wishlist"
-                >
-                  <X size={15} />
-                </button>
+                  <button
+                    className="wish-remove"
+                    onClick={() => onWish(p)}
+                    aria-label={`Remove ${p.name} from wishlist`}
+                    title="Remove from wishlist"
+                  >
+                    <X size={15} />
+                  </button>
+                </article>
+              ))}
+            </div>
+            <footer className="wishlist-footer">
+              <div className="wishlist-total">
+                <small>Wishlist total</small>
+                <b>{money(wishlistTotal)}</b>
+                {wishlistSavings > 0 && (
+                  <span>You save {money(wishlistSavings)}</span>
+                )}
               </div>
-            ))}
-          </div>
+              <button className="wishlist-add-all" onClick={onAddAll}>
+                <ShoppingCart size={16} /> Add all to cart{" "}
+                <ArrowRight size={16} />
+              </button>
+            </footer>
+          </>
         )}
       </aside>
     </>
@@ -894,15 +1019,53 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
   const [coupon, setCoupon] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState("");
   const [couponMessage, setCouponMessage] = useState("");
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [couponConfig, setCouponConfig] = useState(null);
+  const [offersOpen, setOffersOpen] = useState(false);
+  useEffect(() => {
+    fetch("/api/coupons")
+      .then((r) => (r.ok ? r.json() : { coupons: [] }))
+      .then((j) => setAvailableCoupons(j.coupons || []))
+      .catch(() => setAvailableCoupons([]));
+  }, []);
   const discountedSubtotal = items.reduce((s, x) => s + x.p.price * x.qty, 0);
   const mrpTotal = items.reduce((s, x) => s + mrp(x.p) * x.qty, 0);
   const productDiscount = Math.max(0, mrpTotal - discountedSubtotal);
-  const couponDiscount = appliedCoupon
-    ? discountedSubtotal > 1000
-      ? 49
-      : 19
-    : 0;
+  const couponTierRules = couponConfig
+    ? [
+        {
+          min: Number(couponConfig.tier1Min ?? 499),
+          discount: Number(couponConfig.tier1Discount || 0),
+        },
+        {
+          min: Number(couponConfig.tier2Min ?? 999),
+          discount: Number(couponConfig.tier2Discount || 0),
+        },
+        {
+          min: Number(couponConfig.tier3Min ?? 1999),
+          discount: Number(couponConfig.tier3Discount || 0),
+        },
+      ].filter((t) => t.discount > 0)
+    : [];
+  const tieredCoupon = couponTierRules.length > 0;
+  const eligibleTierDiscount = couponTierRules
+    .filter((t) => discountedSubtotal >= t.min)
+    .reduce((best, t) => Math.max(best, t.discount), 0);
+  const couponDiscount =
+    appliedCoupon && couponConfig
+      ? Math.min(
+          discountedSubtotal,
+          tieredCoupon
+            ? eligibleTierDiscount
+            : discountedSubtotal >= Number(couponConfig.minSubtotal || 0)
+              ? Number(couponConfig.flatDiscount ?? couponConfig.discount) || 0
+              : 0,
+        )
+      : 0;
   const total = Math.max(0, discountedSubtotal - couponDiscount);
+  const totalSaved = productDiscount + couponDiscount;
+  const totalDiscountPercent =
+    mrpTotal > 0 ? Math.round((totalSaved / mrpTotal) * 100) : 0;
 
   // Keep upsells relevant to what is already in the cart: use the most
   // represented category, then surface the best-discounted products in it.
@@ -924,15 +1087,33 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
     })
     .slice(0, 4);
 
-  const applyCoupon = () => {
-    const code = coupon.trim().toUpperCase();
-    if (code === "NEW05" || code === "FIRSTBUY") {
-      const amount = discountedSubtotal > 1000 ? 49 : 19;
-      setAppliedCoupon(code);
-      setCouponMessage(`${code} applied · ₹${amount} OFF`);
-    } else {
+  const applyCoupon = async (candidate = coupon) => {
+    const code = candidate.trim().toUpperCase();
+    if (!code) {
       setAppliedCoupon("");
-      setCouponMessage("Use NEW05 or FIRSTBUY for ₹19 OFF");
+      setCouponConfig(null);
+      setCouponMessage("Enter a coupon code.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/coupons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, subtotal: discountedSubtotal }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.coupon)
+        throw new Error(json.error || "Invalid coupon code.");
+      setCouponConfig(json.coupon);
+      setAppliedCoupon(code);
+      setCoupon(code);
+      setCouponMessage(
+        `${code} applied · ₹${Math.min(discountedSubtotal, Number(json.coupon.discount))} OFF`,
+      );
+    } catch (e) {
+      setAppliedCoupon("");
+      setCouponConfig(null);
+      setCouponMessage(e.message || "Invalid coupon code.");
     }
   };
 
@@ -940,8 +1121,10 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
     if (!open) return;
     setCoupon(appliedCoupon || "");
     setCouponMessage(
-      appliedCoupon
-        ? `${appliedCoupon} applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`
+      appliedCoupon && couponConfig
+        ? couponDiscount > 0
+          ? `${appliedCoupon} applied · ₹${couponDiscount} OFF`
+          : `Add items to reach the next eligible coupon tier.`
         : "",
     );
   }, [open]);
@@ -949,10 +1132,14 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
   useEffect(() => {
     if (appliedCoupon) {
       setCouponMessage(
-        `${appliedCoupon} applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`,
+        couponConfig && couponDiscount > 0
+          ? `${appliedCoupon} applied · ₹${couponDiscount} OFF`
+          : couponConfig
+            ? `Add items to reach the next eligible coupon tier.`
+            : "",
       );
     }
-  }, [discountedSubtotal, appliedCoupon]);
+  }, [discountedSubtotal, appliedCoupon, couponConfig, couponDiscount]);
 
   return (
     <>
@@ -990,7 +1177,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                       ? Math.max(0, Math.round((1 - x.p.price / itemMrp) * 100))
                       : 0;
                   return (
-                    <div className="cart-item" key={x.p.id}>
+                    <div className="cart-item cart-item-enter" key={x.p.id}>
                       <div className="cart-item-badge">{off}% off</div>
                       <img src={x.p.image} alt="" />
                       <div className="ci">
@@ -1041,7 +1228,7 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                     placeholder="Enter Coupon Code"
                     aria-label="Coupon code"
                   />
-                  <button onClick={applyCoupon}>Apply</button>
+                  <button onClick={() => applyCoupon()}>Apply</button>
                 </div>
                 {couponMessage && (
                   <small
@@ -1053,34 +1240,27 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   </small>
                 )}
                 <div className="coupon-offer-list">
-                  <button
-                    onClick={() => {
-                      setCoupon("NEW05");
-                      setAppliedCoupon("NEW05");
-                      setCouponMessage(
-                        `NEW05 applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`,
-                      );
-                    }}
-                  >
-                    NEW05 <b>₹{discountedSubtotal > 1000 ? 49 : 19} OFF</b>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCoupon("FIRSTBUY");
-                      setAppliedCoupon("FIRSTBUY");
-                      setCouponMessage(
-                        `FIRSTBUY applied · ₹${discountedSubtotal > 1000 ? 49 : 19} OFF`,
-                      );
-                    }}
-                  >
-                    FIRSTBUY <b>₹{discountedSubtotal > 1000 ? 49 : 19} OFF</b>
-                  </button>
+                  {availableCoupons.slice(0, 2).map((offer) => (
+                    <button
+                      key={offer.code}
+                      onClick={() => {
+                        setCoupon(offer.code);
+                        applyCoupon(offer.code);
+                      }}
+                    >
+                      {offer.code}{" "}
+                      <b>
+                        ₹{Number(offer.maxDiscount ?? offer.discount) || 0} OFF
+                      </b>
+                    </button>
+                  ))}
                 </div>
                 <button
                   className="offers-link"
-                  onClick={() => setCoupon("NEW05")}
+                  onClick={() => setOffersOpen(true)}
                 >
-                  View All Offers <ArrowRight size={16} />
+                  <b>View All Offers</b>
+                  <ArrowRight size={17} />
                 </button>
               </section>
 
@@ -1113,32 +1293,73 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
             </div>
 
             <div className="cart-foot">
+              <div className="cart-summary-heading">
+                <div className="cart-summary-title">
+                  <ShoppingCart size={22} aria-hidden="true" />
+                  <b>Order Summary</b>
+                </div>
+                {totalSaved > 0 && (
+                  <div className="cart-saving-pill">
+                    <BadgePercent size={16} aria-hidden="true" />
+                    <span>
+                      You're Saving <b>{money(totalSaved)}</b>
+                    </span>
+                  </div>
+                )}
+              </div>
               <div className="cart-calculation">
-                <div>
-                  <span>MRP</span>
+                <div className="cart-summary-row">
+                  <span className="cart-summary-label">
+                    <Tag size={16} aria-hidden="true" /> MRP (Total)
+                  </span>
                   <b>{money(mrpTotal)}</b>
                 </div>
-                <div>
-                  <span>Discounted Price</span>
+                <div className="cart-summary-row">
+                  <span className="cart-summary-label">
+                    <BadgePercent size={16} aria-hidden="true" /> Discounted
+                    Price
+                  </span>
                   <b>{money(discountedSubtotal)}</b>
                 </div>
-                <div>
-                  <span>
-                    {appliedCoupon
-                      ? `Coupon Deduction (${appliedCoupon})`
-                      : "Coupon Deduction"}
-                  </span>
-                  <b>−{money(couponDiscount)}</b>
-                </div>
+                {appliedCoupon && (
+                  <div className="cart-summary-row">
+                    <span className="cart-summary-label">
+                      <Ticket size={16} aria-hidden="true" />
+                      {`Coupon Deduction (${appliedCoupon})`}
+                    </span>
+                    <b>−{money(couponDiscount)}</b>
+                  </div>
+                )}
                 <div className="cart-final-line">
-                  <span>Final Payable</span>
-                  <b>{money(total)}</b>
+                  <div className="cart-final-label">
+                    <b>Estimated Total</b>
+                    <small>Inclusive of all taxes</small>
+                  </div>
+                  <div className="cart-final-prices">
+                    {mrpTotal > total && <del>{money(mrpTotal)}</del>}
+                    <b>{money(total)}</b>
+                    {totalDiscountPercent > 0 && (
+                      <em>{totalDiscountPercent}% OFF</em>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="cart-saved">
-                ₹{(productDiscount + couponDiscount).toLocaleString("en-IN")}{" "}
-                Saved so far!
-              </div>
+              {totalSaved > 0 && (
+                <div className="cart-saved">
+                  <PiggyBank size={34} aria-hidden="true" />
+                  <div>
+                    <b>
+                      You are saving <strong>{money(totalSaved)}</strong>
+                    </b>
+                    <span>Great choice! Keep shopping and save more.</span>
+                  </div>
+                  <Sparkles
+                    className="cart-savings-sparkle"
+                    size={18}
+                    aria-hidden="true"
+                  />
+                </div>
+              )}
               <button
                 onClick={() =>
                   onCheckout({
@@ -1147,14 +1368,122 @@ function Cart({ open, onClose, items, onChange, onRemove, onCheckout }) {
                   })
                 }
               >
-                Checkout
+                <LockKeyhole size={18} aria-hidden="true" />
+                <span>Checkout Now</span>
+                <ArrowRight size={19} aria-hidden="true" />
               </button>
             </div>
           </>
         )}
       </aside>
+      {offersOpen && (
+        <div
+          className="offers-modal-backdrop"
+          role="presentation"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setOffersOpen(false);
+          }}
+        >
+          <section
+            className="offers-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="offers-modal-title"
+          >
+            <header>
+              <div>
+                <span className="offers-kicker">
+                  <Sparkles size={13} /> DEALKART COUPONS
+                </span>
+                <h2 id="offers-modal-title">Available offers</h2>
+                <p>Choose a coupon to apply it to your current cart.</p>
+              </div>
+              <button
+                onClick={() => setOffersOpen(false)}
+                aria-label="Close offers"
+              >
+                <X size={20} />
+              </button>
+            </header>
+            <div className="offers-modal-list">
+              {availableCoupons.map((c) => {
+                const tiers = [
+                  {
+                    min: Number(c.tier1Min ?? 499),
+                    discount: Number(c.tier1Discount || 0),
+                  },
+                  {
+                    min: Number(c.tier2Min ?? 999),
+                    discount: Number(c.tier2Discount || 0),
+                  },
+                  {
+                    min: Number(c.tier3Min ?? 1999),
+                    discount: Number(c.tier3Discount || 0),
+                  },
+                ]
+                  .filter((t) => t.discount > 0)
+                  .sort((a, b) => a.min - b.min);
+                const maxOff = Math.max(
+                  Number(c.discount) || 0,
+                  ...tiers.map((t) => t.discount),
+                );
+                return (
+                  <article className="offers-modal-card" key={c.code}>
+                    <div className="offer-code-mark">
+                      <TicketIconFallback />
+                    </div>
+                    <div className="offer-copy">
+                      <div className="offer-code-line">
+                        <b>{c.code}</b>
+                        <strong>Up to ₹{maxOff} OFF</strong>
+                      </div>
+                      {tiers.length ? (
+                        <ul>
+                          {tiers.map((t) => (
+                            <li key={`${t.min}-${t.discount}`}>
+                              Shop for <b>₹{t.min} or more</b> and get{" "}
+                              <b>₹{t.discount} off</b>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>
+                          Shop for ₹{Number(c.minSubtotal || 0)} or more and get
+                          ₹{Number(c.discount || 0)} off.
+                        </p>
+                      )}
+                      <small>
+                        Applies to discounted cart subtotal · One coupon per
+                        order
+                      </small>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setCoupon(c.code);
+                        applyCoupon(c.code);
+                        setOffersOpen(false);
+                      }}
+                    >
+                      Apply
+                    </button>
+                  </article>
+                );
+              })}
+              {!availableCoupons.length && (
+                <div className="offers-empty">
+                  No public offers are available right now. You can still enter
+                  a private coupon code manually.
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </>
   );
+}
+function TicketIconFallback() {
+  return <span className="offer-ticket-symbol">%</span>;
 }
 function Checkout({
   open,
@@ -1163,8 +1492,14 @@ function Checkout({
   couponInfo = { code: "", discount: 0 },
 }) {
   const [f, setF] = useState({ name: "", phone: "", address: "", pincode: "" });
+  const [paymentMode, setPaymentMode] = useState("full");
+  const [paymentBusy, setPaymentBusy] = useState(false);
+  const [paymentError, setPaymentError] = useState("");
   useEffect(() => {
     if (open) {
+      setPaymentError("");
+      setPaymentBusy(false);
+      setPaymentMode("full");
       try {
         const saved = JSON.parse(
           localStorage.getItem("dealkart-checkout") || "null",
@@ -1181,6 +1516,22 @@ function Checkout({
   if (!open) return null;
   const subtotal = items.reduce((s, x) => s + x.p.price * x.qty, 0);
   const orderTotal = Math.max(0, subtotal - (couponInfo.discount || 0));
+  const canPayPartially =
+    items.length > 0 &&
+    items.every(({ p }) => {
+      const amount = Number(p.partialPaymentAmount);
+      return (
+        p.paymentType === "partial" &&
+        Number.isFinite(amount) &&
+        amount > 0 &&
+        amount < Number(p.price)
+      );
+    });
+  const fullPaymentTotals = getPaymentBreakdown(items, orderTotal, "full");
+  const partialPaymentTotals = canPayPartially
+    ? getPaymentBreakdown(items, orderTotal, "partial")
+    : null;
+  const paymentTotals = getPaymentBreakdown(items, orderTotal, paymentMode);
   const ok =
     f.name.trim() &&
     /^\d{10}$/.test(f.phone.trim()) &&
@@ -1193,13 +1544,12 @@ function Checkout({
           <X />
         </button>
         <div className="checkout-top">
-          <MessageCircle />
+          <ShieldCheck />
           <div>
             <small>DEALKART CHECKOUT</small>
             <h2>Complete your order</h2>
             <p>
-              Enter your details, then we'll open WhatsApp with everything
-              filled in.
+              Enter your delivery details, then pay securely through the hosted UPI checkout.
             </p>
           </div>
         </div>
@@ -1251,20 +1601,114 @@ function Checkout({
           </span>
           <b>{money(orderTotal)}</b>
         </div>
-        <a
-          className={"checkout-btn " + (!ok ? "disabled" : "")}
-          href={ok ? waUrl(items, f, couponInfo) : undefined}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => {
-            if (!ok) e.preventDefault();
+        <fieldset className="payment-options">
+          <legend>Choose payment option</legend>
+          <label
+            className={
+              paymentMode === "full"
+                ? "payment-option selected"
+                : "payment-option"
+            }
+          >
+            <input
+              type="radio"
+              name="payment-mode"
+              value="full"
+              checked={paymentMode === "full"}
+              onChange={() => setPaymentMode("full")}
+            />
+            <span>
+              <strong>Full payment now</strong>
+              <small>Pay the complete order total now.</small>
+            </span>
+            <b>{money(fullPaymentTotals.payNow)}</b>
+          </label>
+          <label
+            className={[
+              "payment-option",
+              paymentMode === "partial" ? "selected" : "",
+              !canPayPartially ? "unavailable" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <input
+              type="radio"
+              name="payment-mode"
+              value="partial"
+              checked={paymentMode === "partial"}
+              disabled={!canPayPartially}
+              onChange={() => setPaymentMode("partial")}
+            />
+            <span>
+              <strong>Partial payment, rest on delivery</strong>
+              <small>
+                {canPayPartially
+                  ? `${money(partialPaymentTotals.payNow)} now · ${money(partialPaymentTotals.dueOnDelivery)} on delivery`
+                  : "Available when every item has partial-payment terms set in admin."}
+              </small>
+            </span>
+            {canPayPartially && <b>{money(partialPaymentTotals.payNow)}</b>}
+          </label>
+        </fieldset>
+        <div className="checkout-payment-breakdown">
+          <div>
+            <span>Pay now</span>
+            <b>{money(paymentTotals.payNow)}</b>
+          </div>
+          <div>
+            <span>Due on delivery</span>
+            <b>{money(paymentTotals.dueOnDelivery)}</b>
+          </div>
+        </div>
+        <button
+          type="button"
+          className={"checkout-btn checkout-payment-button " + (!ok || paymentBusy ? "disabled" : "")}
+          disabled={!ok || paymentBusy}
+          onClick={async () => {
+            if (!ok || paymentBusy) return;
+            setPaymentBusy(true);
+            setPaymentError("");
+            try {
+              const response = await fetch("/api/youpi-create-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  customer: {
+                    name: f.name.trim(),
+                    phone: f.phone.trim(),
+                    address: f.address.trim(),
+                    pincode: f.pincode.trim(),
+                  },
+                  items: items.map(({ p, qty }) => ({ productId: p.id, quantity: qty })),
+                  couponCode: couponInfo.code || "",
+                  paymentMode,
+                }),
+              });
+              const result = await response.json().catch(() => ({}));
+              if (!response.ok) throw new Error(result.error || "Unable to start payment. Please try again.");
+              if (!result.checkoutUrl) throw new Error("The payment gateway did not return a checkout URL.");
+              window.location.assign(result.checkoutUrl);
+            } catch (error) {
+              setPaymentError(error?.message || "Unable to start payment. Please try again.");
+              setPaymentBusy(false);
+            }
           }}
         >
-          <MessageCircle size={18} /> Continue to WhatsApp
+          <ShieldCheck size={18} /> {paymentBusy ? "Connecting to payment gateway…" : `Pay ${money(paymentTotals.payNow)} with UPI`}
+        </button>
+        {paymentError && <div className="checkout-payment-error" role="alert">{paymentError}</div>}
+        <a
+          className="checkout-whatsapp"
+          href={ok ? waUrl(items, f, couponInfo, paymentMode) : undefined}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(e) => { if (!ok) e.preventDefault(); }}
+        >
+          <MessageCircle size={16} /> Prefer to order through WhatsApp?
         </a>
         <div className="checkout-note">
-          <ShieldCheck size={14} /> Your details are only used to prepare your
-          WhatsApp order message.
+          <ShieldCheck size={14} /> Your order remains pending until DealKart receives and verifies a payment notification.
         </div>
       </div>
     </div>
@@ -1495,6 +1939,33 @@ function App() {
   const [toast, setToast] = useState("");
   const [couponInfo, setCouponInfo] = useState({ code: "", discount: 0 });
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment_return") !== "1") return;
+    const orderId = params.get("order_id");
+    if (!orderId) {
+      setToast("Returned from checkout. Your payment is still being verified.");
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/youpi-payment-status?orderId=${encodeURIComponent(orderId)}`)
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Status unavailable");
+        if (cancelled) return;
+        if (data.paymentStatus === "paid") setToast(`Payment verified for order ${orderId.slice(0, 8)}. Thank you!`);
+        else if (["failed", "expired", "cancelled"].includes(data.paymentStatus)) setToast("Payment was not confirmed. You can retry checkout or contact DealKart support.");
+        else setToast("Payment status is pending verification. Please don't pay again until you check your order status.");
+      })
+      .catch(() => { if (!cancelled) setToast("We are checking your payment. Please contact DealKart if the status does not update."); })
+      .finally(() => {
+        const cleanUrl = new URL(window.location.href);
+        cleanUrl.searchParams.delete("payment_return");
+        cleanUrl.searchParams.delete("order_id");
+        window.history.replaceState({}, "", cleanUrl.pathname + cleanUrl.search + cleanUrl.hash);
+      });
+    return () => { cancelled = true; };
+  }, []);
+  useEffect(() => {
     const onHash = () => {
       if (window.location.hash === "#admin") setPage("admin");
       else if (window.location.hash === "#todays-special") setPage("special");
@@ -1550,7 +2021,7 @@ function App() {
     reveal();
     window.addEventListener("scroll", reveal, { passive: true });
     return () => window.removeEventListener("scroll", reveal);
-  }, [q, category]);
+  }, [q, category, catalogStatus, catalogVersion]);
   useEffect(() => {
     let last = window.scrollY;
     const onScroll = () => {
@@ -1568,21 +2039,23 @@ function App() {
   }, [toast]);
   const filtered = useMemo(() => {
     const s = q.toLowerCase().trim();
-    return products.filter(
-      (p) =>
-        (category === "All Deals" || p.category === category) &&
-        (!s ||
-          [
-            p.name,
-            p.brand,
-            p.category,
-            p.description,
-            ...(Array.isArray(p.specs) ? p.specs : []),
-          ]
-            .join(" ")
-            .toLowerCase()
-            .includes(s)),
-    );
+    return products
+      .filter(
+        (p) =>
+          (category === "All Deals" || p.category === category) &&
+          (!s ||
+            [
+              p.name,
+              p.brand,
+              p.category,
+              p.description,
+              ...(Array.isArray(p.specs) ? p.specs : []),
+            ]
+              .join(" ")
+              .toLowerCase()
+              .includes(s)),
+      )
+      .sort(compareStorefrontOrder);
   }, [q, category, catalogVersion]);
   const submitSearch = (value) => {
     const search = value.trim();
@@ -1623,6 +2096,41 @@ function App() {
       );
       return exists ? w.filter((x) => x.id !== p.id) : [...w, p];
     });
+  };
+  const addWishlistToCart = () => {
+    if (!wish.length) return;
+    const savedItems = [...wish];
+    setCart((current) => {
+      const merged = [...current];
+      for (const product of savedItems) {
+        const existingIndex = merged.findIndex(
+          (item) => item.p.id === product.id,
+        );
+        if (existingIndex >= 0) {
+          merged[existingIndex] = {
+            ...merged[existingIndex],
+            qty: merged[existingIndex].qty + 1,
+          };
+        } else {
+          merged.push({ p: product, qty: 1 });
+        }
+      }
+      return merged;
+    });
+    setWishlistOpen(false);
+    setCartOpen(true);
+    setToast(
+      `${savedItems.length} saved ${savedItems.length === 1 ? "item" : "items"} added to cart`,
+    );
+  };
+  const clearWishlist = () => {
+    if (
+      !wish.length ||
+      !window.confirm("Remove all saved products from your wishlist?")
+    )
+      return;
+    setWish([]);
+    setToast("Wishlist cleared");
   };
   const seen = (p) =>
     setRecent((r) => [p, ...r.filter((x) => x.id !== p.id)].slice(0, 4));
@@ -1898,6 +2406,8 @@ function App() {
           setSelected(p);
         }}
         onAdd={add}
+        onAddAll={addWishlistToCart}
+        onClear={clearWishlist}
         onWish={toggleWish}
       />
       <Cart
