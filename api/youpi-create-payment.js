@@ -26,7 +26,7 @@ const couponDiscount = (row, subtotal) => {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
-  const required = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "YOUPI_API_URL", "YOUPI_MERCHANT_ID", "DEALKART_PUBLIC_URL"];
+  const required = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "YOUPI_API_URL", "YOUPI_MERCHANT_ID", "YOUPI_MERCHANT_API_KEY", "DEALKART_PUBLIC_URL"];
   const missing = required.filter((key) => !process.env[key]);
   if (missing.length) return res.status(503).json({ error: `Payment integration is not configured on the server (${missing.join(", ")}).` });
 
@@ -136,7 +136,11 @@ export default async function handler(req, res) {
     try {
       const response = await fetch(`${baseUrl}/api/v1/payments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Merchant-Id": process.env.YOUPI_MERCHANT_ID },
+        headers: {
+          "Content-Type": "application/json",
+          "X-Merchant-Id": process.env.YOUPI_MERCHANT_ID,
+          "X-Merchant-Key": process.env.YOUPI_MERCHANT_API_KEY,
+        },
         body: JSON.stringify({
           orderId,
           amount: amountString(payNowAmount),

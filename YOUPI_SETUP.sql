@@ -13,7 +13,7 @@ create table if not exists public.orders (
   pay_now_amount numeric(12,2) not null check (pay_now_amount > 0),
   due_on_delivery numeric(12,2) not null default 0 check (due_on_delivery >= 0),
   payment_mode text not null check (payment_mode in ('full','partial')),
-  payment_status text not null default 'pending' check (payment_status in ('pending','paid','failed','expired','cancelled')),
+  payment_status text not null default 'pending' check (payment_status in ('pending','observed_success','manual_review','paid','failed','expired','cancelled')),
   gateway_provider text not null default 'youpi',
   gateway_payment_id text,
   gateway_checkout_url text,
@@ -32,7 +32,7 @@ create unique index if not exists orders_gateway_payment_id_unique
 create table if not exists public.payment_webhook_events (
   delivery_id text primary key,
   order_id text not null references public.orders(id) on delete cascade,
-  event_name text not null check (event_name in ('SUCCESS','FAILED','EXPIRED','CANCELLED')),
+  event_name text not null check (event_name in ('SUCCESS','OBSERVED_SUCCESS','RECONCILED','MANUAL_REVIEW','FAILED','EXPIRED','CANCELLED')),
   received_at timestamptz not null default now()
 );
 create index if not exists payment_webhook_events_order_idx
@@ -42,3 +42,29 @@ alter table public.orders enable row level security;
 alter table public.payment_webhook_events enable row level security;
 -- Intentionally no browser-facing RLS policies. Access these tables only through
 -- server endpoints using SUPABASE_SERVICE_ROLE_KEY stored in server environment variables.
+
+-- If these tables were created by an earlier version of this setup, widen their checks.
+do $$
+declare c record;
+begin
+  for c in select conname from pg_constraint where conrelid = 'public.orders'::regclass and contype = 'c' and pg_get_constraintdef(oid) ilike '%payment_status%' loop
+    execute format('alter table public.orders drop constraint %I', c.conname);
+  end loop;
+  alter table public.orders add constraint orders_payment_status_check
+    check (payment_status in ('pending','observed_success','manual_review','paid','failed','expired','cancelled'));
+  for c in select conname from pg_constraint where conrelid = 'public.payment_webhook_events'::regclass and contype = 'c' and pg_get_constraintdef(oid) ilike '%event_name%' loop
+    execute format('alter table public.payment_webhook_events drop constraint %I', c.conname);
+  end loop;
+  alter table public.payment_webhook_events add constraint payment_webhook_events_event_name_check
+    check (event_name in ('SUCCESS','OBSERVED_SUCCESS','RECONCILED','MANUAL_REVIEW','FAILED','EXPIRED','CANCELLED'));
+end $$;
+
+-- Widen constraints when upgrading an existing installation.
+do $$
+declare c record;
+begin
+  for c in select conname from pg_constraint where conrelid='public.orders'::regclass and contype='c' and pg_get_constraintdef(oid) ilike '%payment_status%' loop execute format('alter table public.orders drop constraint %I', c.conname); end loop;
+  alter table public.orders add constraint orders_payment_status_check check (payment_status in ('pending','observed_success','manual_review','paid','failed','expired','cancelled'));
+  for c in select conname from pg_constraint where conrelid='public.payment_webhook_events'::regclass and contype='c' and pg_get_constraintdef(oid) ilike '%event_name%' loop execute format('alter table public.payment_webhook_events drop constraint %I', c.conname); end loop;
+  alter table public.payment_webhook_events add constraint payment_webhook_events_event_name_check check (event_name in ('SUCCESS','OBSERVED_SUCCESS','RECONCILED','MANUAL_REVIEW','FAILED','EXPIRED','CANCELLED'));
+end $$;
